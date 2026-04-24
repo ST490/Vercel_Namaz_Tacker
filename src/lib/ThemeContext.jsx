@@ -6,8 +6,7 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('namaz-theme');
     if (saved) return saved;
-    const hour = new Date().getHours();
-    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
+    return 'light'; // Default to light theme
   });
 
   useEffect(() => {

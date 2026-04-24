@@ -1,39 +1,55 @@
-**Welcome to your Base44 project** 
+# ☪️ Namaz Tracker
 
-**About**
+A beautiful, gamified, mobile-first web application designed to help Muslims track their 5 daily prayers, manage their Qaza (missed prayers) backlog, and log Quran reading consistency.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## 🚀 Live Demo
 
-This project contains everything you need to run your app locally.
+**[Namaz Tracker on Vercel](https://namaz-tracker-mu.vercel.app)**
 
-**Edit the code in your local development environment**
+## ✨ Features
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+- **Daily Dashboard**: Track your 5 daily prayers (Fajr, Dhuhr, Asr, Maghrib, Isha).
+- **Advanced Scoring**: Get points based on prayer quality (On time, at Mosque, Sunnah, Nafl).
+- **Qaza Tracker**: Easily log and manage your missed prayers backlog with visual progress.
+- **Achievements & Badges**: Unlock badges for consistency (e.g., 7-day streak, 30-day Fajr streak).
+- **Local Authentication**: Isolated user profiles using local storage, plus a Guest mode.
+- **Offline Ready**: No database connection required, all data is safely stored in your browser's local storage.
+- **Beautiful UI**: Built with Tailwind CSS, Framer Motion for animations, and Radix UI primitives. Includes Dark/Light mode toggle.
 
-**Prerequisites:** 
+## 💻 Tech Stack
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+- **Framework**: React 18 + Vite
+- **Routing**: React Router DOM
+- **Styling**: Tailwind CSS + `clsx` + `tailwind-merge`
+- **Components**: UI components inspired by shadcn/ui
+- **Icons**: Lucide React
+- **Animations**: Framer Motion
+- **Hosting**: Vercel
 
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
+## 🛠️ Local Development
 
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
+1. Clone the repository
+   ```bash
+   git clone https://github.com/ST490/Vercel_Namaz_Tacker.git
+   cd "Vercel_Namaz_Tacker"
+   ```
 
-Run the app: `npm run dev`
+2. Install dependencies
+   ```bash
+   npm install
+   ```
 
-**Publish your changes**
+3. Start the development server
+   ```bash
+   npm run dev
+   ```
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+4. Open your browser and navigate to `http://localhost:5173`
 
-**Docs & Support**
+## 🔒 Privacy & Data Storage
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+Namaz Tracker is fully client-side. **No data leaves your device**.
+All prayer logs, profiles, and settings are saved in your browser's `localStorage` using isolated namespaces for different local accounts.
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+---
+*Made with ❤️ for the Ummah.*
