@@ -1,20 +1,29 @@
 /**
- * Local data client — replaces the Base44 SDK.
- * All data is persisted in localStorage under the key `namaz_db`.
+ * Local data client — persists all data in localStorage.
+ * Data is namespaced per user: `namaz_db_<username>`
+ * so each account (or guest) has its own isolated storage.
  */
 
-const DB_KEY = 'namaz_db';
+function getDbKey() {
+  try {
+    const session = JSON.parse(localStorage.getItem('namaz_session') || 'null');
+    const username = session?.username || 'guest';
+    return `namaz_db_${username}`;
+  } catch {
+    return 'namaz_db_guest';
+  }
+}
 
 function loadDB() {
   try {
-    return JSON.parse(localStorage.getItem(DB_KEY) || '{}');
+    return JSON.parse(localStorage.getItem(getDbKey()) || '{}');
   } catch {
     return {};
   }
 }
 
 function saveDB(db) {
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  localStorage.setItem(getDbKey(), JSON.stringify(db));
 }
 
 function getCollection(name) {
@@ -106,7 +115,6 @@ function createEntityClient(entityName) {
     },
 
     subscribe(callback) {
-      // No-op for local store; return unsubscribe fn
       return () => {};
     },
   };

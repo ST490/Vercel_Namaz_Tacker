@@ -1,7 +1,8 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, RotateCcw, Award, Settings, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, RotateCcw, Award, Settings, Moon, Sun, LogOut, Ghost } from 'lucide-react';
 import { useTheme } from '@/lib/ThemeContext';
+import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
 
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
 export default function AppLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -26,16 +28,46 @@ export default function AppLayout() {
               Namaz Tracker
             </h1>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-secondary transition-colors"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-gold" />
-            ) : (
-              <Moon className="w-5 h-5 text-emerald" />
+
+          <div className="flex items-center gap-1">
+            {/* User chip */}
+            {user && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-xs font-medium text-secondary-foreground mr-1">
+                {user.isGuest ? (
+                  <Ghost className="w-3 h-3" />
+                ) : (
+                  <span className="w-4 h-4 rounded-full bg-primary/20 text-primary text-[9px] flex items-center justify-center font-bold uppercase">
+                    {user.username.charAt(0)}
+                  </span>
+                )}
+                <span className="max-w-[80px] truncate">
+                  {user.isGuest ? 'Guest' : user.username}
+                </span>
+              </div>
             )}
-          </button>
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-gold" />
+              ) : (
+                <Moon className="w-4 h-4 text-emerald" />
+              )}
+            </button>
+
+            {/* Logout */}
+            <button
+              onClick={logout}
+              className="p-2 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
         </div>
       </header>
 

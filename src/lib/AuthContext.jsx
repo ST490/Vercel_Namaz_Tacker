@@ -1,150 +1,113 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
+
+const USERS_KEY = 'namaz_users';
+const SESSION_KEY = 'namaz_session';
+
+// Simple hash (non-cryptographic, good enough for local-only storage)
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  return hash.toString(36);
+}
+
+function loadUsers() {
+  try {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
 
   useEffect(() => {
-    checkAppState();
+    // Restore session on mount
+    try {
+      const session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (session && session.username) {
+        setUser(session);
+        setIsAuthenticated(true);
+      }
+    } catch {
+      // ignore
+    }
+    setIsLoadingAuth(false);
   }, []);
 
-  const checkAppState = async () => {
-    try {
-      setIsLoadingPublicSettings(true);
-      setAuthError(null);
-      
-      // First, check app public settings (with token if available)
-      // This will tell us if auth is required, user not registered, etc.
-      const appClient = createAxiosClient({
-        baseURL: `/api/apps/public`,
-        headers: {
-          'X-App-Id': appParams.appId
-        },
-        token: appParams.token, // Include token if available
-        interceptResponses: true
-      });
-      
-      try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          setAuthChecked(true);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
-      setIsLoadingPublicSettings(false);
-      setIsLoadingAuth(false);
-    }
+  /**
+   * Register a new account. Returns { ok, error }.
+   */
+  const register = (username, password) => {
+    const trimmed = username.trim().toLowerCase();
+    if (!trimmed || trimmed.length < 2) return { ok: false, error: 'Username must be at least 2 characters.' };
+    if (password.length < 4) return { ok: false, error: 'Password must be at least 4 characters.' };
+
+    const users = loadUsers();
+    if (users[trimmed]) return { ok: false, error: 'Username already taken.' };
+
+    users[trimmed] = { username: trimmed, passwordHash: simpleHash(password) };
+    saveUsers(users);
+    return { ok: true };
   };
 
-  const checkUserAuth = async () => {
-    try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
-    } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
-    }
+  /**
+   * Login with username + password. Returns { ok, error }.
+   */
+  const login = (username, password) => {
+    const trimmed = username.trim().toLowerCase();
+    const users = loadUsers();
+    const account = users[trimmed];
+
+    if (!account) return { ok: false, error: 'No account found with that username.' };
+    if (account.passwordHash !== simpleHash(password)) return { ok: false, error: 'Incorrect password.' };
+
+    const session = { username: trimmed, isGuest: false };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    setUser(session);
+    setIsAuthenticated(true);
+    setAuthError(null);
+    return { ok: true };
   };
 
-  const logout = (shouldRedirect = true) => {
+  /**
+   * Continue as guest — creates a temporary session, data stored under 'guest' key.
+   */
+  const loginAsGuest = () => {
+    const session = { username: 'guest', isGuest: true };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    setUser(session);
+    setIsAuthenticated(true);
+    setAuthError(null);
+  };
+
+  const logout = () => {
+    localStorage.removeItem(SESSION_KEY);
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
-    }
-  };
-
-  const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
       isLoadingAuth,
-      isLoadingPublicSettings,
       authError,
-      appPublicSettings,
-      authChecked,
+      login,
+      register,
+      loginAsGuest,
       logout,
-      navigateToLogin,
-      checkUserAuth,
-      checkAppState
     }}>
       {children}
     </AuthContext.Provider>
@@ -153,8 +116,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
