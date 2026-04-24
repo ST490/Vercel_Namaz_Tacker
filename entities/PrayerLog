@@ -1,0 +1,68 @@
+{
+  "name": "PrayerLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date of the prayer log"
+    },
+    "prayer_name": {
+      "type": "string",
+      "enum": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ],
+      "description": "Name of the prayer"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the prayer was completed"
+    },
+    "location": {
+      "type": "string",
+      "enum": [
+        "mosque",
+        "home",
+        "other"
+      ],
+      "description": "Where the prayer was performed"
+    },
+    "timeliness": {
+      "type": "string",
+      "enum": [
+        "on_time",
+        "late",
+        "qaza"
+      ],
+      "description": "Whether the prayer was on time or late"
+    },
+    "composition": {
+      "type": "string",
+      "enum": [
+        "fard_only",
+        "fard_sunnah",
+        "fard_sunnah_nafl"
+      ],
+      "description": "What rakats were prayed"
+    },
+    "quran_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Quran was read today"
+    },
+    "quran_pages": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of Quran pages read"
+    }
+  },
+  "required": [
+    "date",
+    "prayer_name"
+  ]
+}

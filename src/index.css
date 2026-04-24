@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-heading: 'Amiri', serif;
+    --font-body: 'Inter', sans-serif;
+
+    --background: 45 30% 96%;
+    --foreground: 150 20% 15%;
+    --card: 45 25% 98%;
+    --card-foreground: 150 20% 15%;
+    --popover: 45 25% 98%;
+    --popover-foreground: 150 20% 15%;
+    --primary: 153 50% 28%;
+    --primary-foreground: 45 30% 96%;
+    --secondary: 45 20% 90%;
+    --secondary-foreground: 150 20% 20%;
+    --muted: 45 15% 92%;
+    --muted-foreground: 150 10% 45%;
+    --accent: 153 40% 35%;
+    --accent-foreground: 45 30% 96%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 15% 85%;
+    --input: 150 15% 85%;
+    --ring: 153 50% 28%;
+    --chart-1: 153 50% 28%;
+    --chart-2: 153 40% 40%;
+    --chart-3: 153 30% 50%;
+    --chart-4: 45 60% 55%;
+    --chart-5: 45 50% 65%;
+    --radius: 0.75rem;
+
+    --sidebar-background: 45 25% 95%;
+    --sidebar-foreground: 150 20% 15%;
+    --sidebar-primary: 153 50% 28%;
+    --sidebar-primary-foreground: 45 30% 96%;
+    --sidebar-accent: 153 40% 90%;
+    --sidebar-accent-foreground: 150 20% 15%;
+    --sidebar-border: 150 15% 85%;
+    --sidebar-ring: 153 50% 28%;
+
+    --gold: 43 80% 52%;
+    --gold-light: 43 70% 65%;
+    --emerald: 153 50% 28%;
+    --emerald-light: 153 40% 45%;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 43 30% 90%;
+    --card: 0 0% 8%;
+    --card-foreground: 43 30% 90%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 43 30% 90%;
+    --primary: 43 80% 52%;
+    --primary-foreground: 0 0% 5%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 43 30% 85%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 43 15% 55%;
+    --accent: 43 70% 45%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 43 10% 18%;
+    --input: 43 10% 18%;
+    --ring: 43 80% 52%;
+    --chart-1: 43 80% 52%;
+    --chart-2: 43 60% 45%;
+    --chart-3: 43 40% 35%;
+    --chart-4: 153 40% 40%;
+    --chart-5: 153 30% 50%;
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 43 30% 90%;
+    --sidebar-primary: 43 80% 52%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 43 20% 15%;
+    --sidebar-accent-foreground: 43 30% 90%;
+    --sidebar-border: 43 10% 18%;
+    --sidebar-ring: 43 80% 52%;
+
+    --gold: 43 80% 52%;
+    --gold-light: 43 70% 65%;
+    --emerald: 153 50% 28%;
+    --emerald-light: 153 40% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+}

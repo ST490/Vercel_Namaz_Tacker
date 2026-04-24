@@ -1,0 +1,40 @@
+{
+  "name": "QazaTracker",
+  "type": "object",
+  "properties": {
+    "prayer_name": {
+      "type": "string",
+      "enum": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ],
+      "description": "Name of the missed prayer"
+    },
+    "total_missed": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of missed prayers"
+    },
+    "completed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of qaza prayers completed"
+    },
+    "date_completed": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when a qaza prayer was made up"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes"
+    }
+  },
+  "required": [
+    "prayer_name",
+    "total_missed"
+  ]
+}

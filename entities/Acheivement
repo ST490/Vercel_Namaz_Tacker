@@ -1,0 +1,28 @@
+{
+  "name": "Achievement",
+  "type": "object",
+  "properties": {
+    "achievement_key": {
+      "type": "string",
+      "description": "Unique key for the achievement"
+    },
+    "unlocked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the achievement is unlocked"
+    },
+    "unlocked_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the achievement was unlocked"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Current progress towards the achievement"
+    }
+  },
+  "required": [
+    "achievement_key"
+  ]
+}
