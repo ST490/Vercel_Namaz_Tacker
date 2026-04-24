@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, RotateCcw, Award, Settings, Moon, Sun, LogOut, Ghost } from 'lucide-react';
+import { LayoutDashboard, RotateCcw, Compass, Settings, Moon, Sun, LogOut, Ghost } from 'lucide-react';
 import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Today' },
   { path: '/qaza', icon: RotateCcw, label: 'Qaza' },
-  { path: '/achievements', icon: Award, label: 'Badges' },
+  { path: '/hub', icon: Compass, label: 'Hub' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 

@@ -51,44 +51,49 @@
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 43 30% 90%;
-    --card: 0 0% 8%;
-    --card-foreground: 43 30% 90%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 43 30% 90%;
-    --primary: 43 80% 52%;
-    --primary-foreground: 0 0% 5%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 43 30% 85%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 43 15% 55%;
-    --accent: 43 70% 45%;
-    --accent-foreground: 0 0% 5%;
+    /* Royal Night & Gold Theme */
+    --background: 222 52% 10%;           /* approx #0A1128 */
+    --foreground: 210 17% 98%;           /* #F8F9FA */
+    --card: 215 68% 11%;                 /* #0B1A30 */
+    --card-foreground: 210 17% 98%;
+    --popover: 215 68% 11%;
+    --popover-foreground: 210 17% 98%;
+    --primary: 51 100% 50%;              /* #FFD700 Gold */
+    --primary-foreground: 222 52% 10%;
+    --secondary: 217 52% 16%;
+    --secondary-foreground: 210 17% 90%;
+    --muted: 217 45% 16%;
+    --muted-foreground: 220 13% 63%;     /* #9BA4B5 */
+    --accent: 51 100% 50%;
+    --accent-foreground: 222 52% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 43 10% 18%;
-    --input: 43 10% 18%;
-    --ring: 43 80% 52%;
-    --chart-1: 43 80% 52%;
-    --chart-2: 43 60% 45%;
-    --chart-3: 43 40% 35%;
+    --border: 215 35% 20%;
+    --input: 215 35% 20%;
+    --ring: 51 100% 50%;
+    --chart-1: 51 100% 50%;
+    --chart-2: 51 80% 45%;
+    --chart-3: 51 60% 35%;
     --chart-4: 153 40% 40%;
     --chart-5: 153 30% 50%;
 
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 43 30% 90%;
-    --sidebar-primary: 43 80% 52%;
-    --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 43 20% 15%;
-    --sidebar-accent-foreground: 43 30% 90%;
-    --sidebar-border: 43 10% 18%;
-    --sidebar-ring: 43 80% 52%;
+    --sidebar-background: 222 52% 8%;
+    --sidebar-foreground: 210 17% 98%;
+    --sidebar-primary: 51 100% 50%;
+    --sidebar-primary-foreground: 222 52% 10%;
+    --sidebar-accent: 215 45% 18%;
+    --sidebar-accent-foreground: 210 17% 98%;
+    --sidebar-border: 215 35% 20%;
+    --sidebar-ring: 51 100% 50%;
 
-    --gold: 43 80% 52%;
-    --gold-light: 43 70% 65%;
+    --gold: 51 100% 50%;
+    --gold-light: 51 90% 65%;
     --emerald: 153 50% 28%;
     --emerald-light: 153 40% 45%;
+
+    /* Gradient background for dark mode */
+    --bg-gradient-from: #0A1128;
+    --bg-gradient-to: #162B4C;
   }
 }
 
@@ -98,7 +103,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body;
+    @apply text-foreground font-body;
+    background-color: hsl(var(--background));
+  }
+
+  .dark body {
+    background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
+    min-height: 100vh;
   }
 }
 
@@ -108,5 +119,29 @@
   }
   .font-body {
     font-family: var(--font-body);
+  }
+
+  /* Dark mode card border with gold tint */
+  .dark .card-gold-border {
+    border-color: rgba(255, 215, 0, 0.15);
+  }
+
+  /* Ripple animation for Tasbeeh counter */
+  @keyframes ripple-out {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  @keyframes tap-flash {
+    0%, 100% { background-color: transparent; }
+    30% { background-color: rgba(255, 215, 0, 0.25); }
+  }
+
+  .tasbeeh-ripple {
+    animation: ripple-out 0.5s ease-out forwards;
+  }
+
+  .tasbeeh-flash {
+    animation: tap-flash 0.4s ease-out;
   }
 }

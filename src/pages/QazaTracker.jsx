@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Roza constants
+const ROZA_PRAYER_NAME = 'roza';
+const ROZA_ICON = '🌙';
+const ROZA_LABEL = 'Roza (Missed Fasts)';
+
 export default function QazaTracker() {
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
@@ -33,10 +38,7 @@ export default function QazaTracker() {
   const handleAddQaza = () => {
     const existing = qazaList.find(q => q.prayer_name === newPrayer);
     if (existing) {
-      updateMutation.mutate({
-        id: existing.id,
-        data: { total_missed: existing.total_missed + newCount }
-      });
+      updateMutation.mutate({ id: existing.id, data: { total_missed: existing.total_missed + newCount } });
       setShowAdd(false);
     } else {
       createMutation.mutate({ prayer_name: newPrayer, total_missed: newCount, completed_count: 0 });
@@ -45,25 +47,48 @@ export default function QazaTracker() {
 
   const handleComplete = (qaza) => {
     if (qaza.completed_count < qaza.total_missed) {
-      updateMutation.mutate({
-        id: qaza.id,
-        data: { completed_count: qaza.completed_count + 1 }
-      });
+      updateMutation.mutate({ id: qaza.id, data: { completed_count: qaza.completed_count + 1 } });
     }
   };
 
   const handleUncomplete = (qaza) => {
     if (qaza.completed_count > 0) {
-      updateMutation.mutate({
-        id: qaza.id,
-        data: { completed_count: qaza.completed_count - 1 }
-      });
+      updateMutation.mutate({ id: qaza.id, data: { completed_count: qaza.completed_count - 1 } });
     }
   };
 
-  const totalMissed = qazaList.reduce((sum, q) => sum + (q.total_missed || 0), 0);
-  const totalCompleted = qazaList.reduce((sum, q) => sum + (q.completed_count || 0), 0);
+  // Separate roza from prayers
+  const prayerList = qazaList.filter(q => q.prayer_name !== ROZA_PRAYER_NAME);
+  const rozaEntry = qazaList.find(q => q.prayer_name === ROZA_PRAYER_NAME);
+
+  const totalMissed = prayerList.reduce((sum, q) => sum + (q.total_missed || 0), 0);
+  const totalCompleted = prayerList.reduce((sum, q) => sum + (q.completed_count || 0), 0);
   const overallProgress = totalMissed > 0 ? (totalCompleted / totalMissed) * 100 : 0;
+
+  const rozaRemaining = rozaEntry ? (rozaEntry.total_missed - rozaEntry.completed_count) : 0;
+  const rozaProgress = rozaEntry && rozaEntry.total_missed > 0
+    ? (rozaEntry.completed_count / rozaEntry.total_missed) * 100
+    : 0;
+
+  const handleRozaAdd = () => {
+    if (rozaEntry) {
+      updateMutation.mutate({ id: rozaEntry.id, data: { total_missed: rozaEntry.total_missed + 1 } });
+    } else {
+      createMutation.mutate({ prayer_name: ROZA_PRAYER_NAME, total_missed: 1, completed_count: 0 });
+    }
+  };
+
+  const handleRozaComplete = () => {
+    if (rozaEntry && rozaEntry.completed_count < rozaEntry.total_missed) {
+      updateMutation.mutate({ id: rozaEntry.id, data: { completed_count: rozaEntry.completed_count + 1 } });
+    }
+  };
+
+  const handleRozaUncomplete = () => {
+    if (rozaEntry && rozaEntry.completed_count > 0) {
+      updateMutation.mutate({ id: rozaEntry.id, data: { completed_count: rozaEntry.completed_count - 1 } });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -104,11 +129,10 @@ export default function QazaTracker() {
 
       {/* Prayer breakdown */}
       <div className="space-y-2">
-        {qazaList.map((qaza, i) => {
+        {prayerList.map((qaza, i) => {
           const progress = qaza.total_missed > 0 ? (qaza.completed_count / qaza.total_missed) * 100 : 0;
           const remaining = qaza.total_missed - qaza.completed_count;
           const isComplete = remaining <= 0;
-
           return (
             <motion.div
               key={qaza.id}
@@ -157,15 +181,15 @@ export default function QazaTracker() {
         })}
       </div>
 
-      {qazaList.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
+      {prayerList.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
           <RotateCcw className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">No qaza prayers logged yet</p>
           <p className="text-xs mt-1">Tap + to add missed prayers</p>
         </div>
       )}
 
-      {/* Add Button */}
+      {/* Add Missed Prayers Dialog */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogTrigger asChild>
           <Button className="w-full" size="lg">
@@ -207,6 +231,79 @@ export default function QazaTracker() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Roza / Missed Fasts Card ── */}
+      <div className="pt-2">
+        <div className="flex items-center gap-2 px-1 mb-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+            Fasting
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={`rounded-xl border p-4 ${
+            rozaEntry && rozaRemaining <= 0 && rozaEntry.total_missed > 0
+              ? 'border-primary/40 bg-primary/5'
+              : 'border-border bg-card'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{ROZA_ICON}</span>
+              <div>
+                <h4 className="font-semibold text-sm">{ROZA_LABEL}</h4>
+                <p className="text-[10px] text-muted-foreground">
+                  {!rozaEntry || rozaEntry.total_missed === 0
+                    ? 'No missed fasts logged'
+                    : rozaRemaining <= 0
+                    ? 'All caught up! ✨'
+                    : `${rozaRemaining} remaining`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={handleRozaUncomplete}
+                disabled={!rozaEntry || rozaEntry.completed_count <= 0}
+                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors disabled:opacity-30"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-sm font-bold w-8 text-center">
+                {rozaEntry?.completed_count || 0}
+              </span>
+              <button
+                onClick={handleRozaComplete}
+                disabled={!rozaEntry || rozaRemaining <= 0}
+                className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-30"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-3">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              animate={{ width: `${rozaProgress}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+
+          <button
+            onClick={handleRozaAdd}
+            className="w-full text-xs text-primary hover:opacity-80 transition-opacity text-center flex items-center justify-center gap-1"
+          >
+            <Plus className="w-3 h-3" />
+            Add a missed fast to total
+          </button>
+        </motion.div>
+      </div>
     </div>
   );
 }
