@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Clock, MapPin, Loader2 } from 'lucide-react';
 import { usePrayerTimes, getCurrentPrayer } from '@/hooks/usePrayerTimes';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 
 const PRAYER_ORDER = [
   { key: 'fajr',    label: 'Fajr',    icon: '🌅' },
@@ -11,6 +11,8 @@ const PRAYER_ORDER = [
   { key: 'maghrib', label: 'Maghrib', icon: '🌇' },
   { key: 'isha',    label: 'Isha',    icon: '🌙' },
 ];
+
+import PrayerIcon from './PrayerIcon';
 
 export default function CurrentPrayerWidget() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -36,44 +38,62 @@ export default function CurrentPrayerWidget() {
     return thisIdx < currentIdx ? 'past' : 'upcoming';
   };
 
+  const formatPrayerTime = (timeStr) => {
+    try {
+      return format(parse(timeStr.split(' ')[0], 'HH:mm', new Date()), 'h:mm a');
+    } catch (e) {
+      return timeStr;
+    }
+  };
+
   return (
     <div
-      className="rounded-2xl border overflow-hidden cursor-pointer card-gold-border"
+      className="rounded-[2rem] border overflow-hidden cursor-pointer shadow-sm transition-all hover:shadow-md"
       style={{
         background: 'hsl(var(--card))',
-        borderColor: 'rgba(255, 215, 0, 0.18)',
+        borderColor: 'rgba(255, 215, 0, 0.12)',
       }}
       onClick={() => setIsExpanded(e => !e)}
     >
-      {/* Collapsed / Header Row */}
-      <div className="px-4 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-            style={{ background: 'rgba(255,215,0,0.12)' }}
-          >
+      {/* Collapsed / Header Row - Premium Design */}
+      <div className="px-5 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {/* Large Square Icon Container */}
+          {isLoading ? (
+            <div className="w-14 h-14 rounded-2xl bg-secondary animate-pulse flex items-center justify-center">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          ) : (
+            <PrayerIcon prayer={currentPrayer?.key} size="lg" />
+          )}
+
+          <div className="space-y-1">
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            ) : (
-              currentPrayer?.icon || '🕌'
-            )}
-          </div>
-          <div>
-            {isLoading ? (
-              <div className="h-4 w-32 rounded bg-secondary animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-6 w-24 rounded bg-secondary animate-pulse" />
+                <div className="h-4 w-32 rounded bg-secondary animate-pulse" />
+              </div>
             ) : error ? (
               <p className="text-sm font-semibold text-muted-foreground">Prayer Timings</p>
             ) : (
               <>
-                <p className="text-sm font-bold text-foreground leading-tight">
-                  🕌 {currentPrayer?.label}
-                  {currentPrayer?.isTomorrow ? ' — Tomorrow' : ''}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {currentPrayer?.isTomorrow
-                    ? `Starts in ${currentPrayer.timeLeft}`
-                    : `Ends in ${currentPrayer.timeLeft}`}
-                </p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-2xl font-extrabold tracking-tight text-[#1B4332] dark:text-primary">
+                    {currentPrayer?.label}
+                  </h3>
+                  <span className="text-muted-foreground/30 text-xl font-light">•</span>
+                  <span className="text-base font-medium text-muted-foreground pt-0.5">
+                    {prayerData?.timings[currentPrayer?.key]
+                      ? formatPrayerTime(prayerData.timings[currentPrayer.key])
+                      : '--:--'}
+                  </span>
+                </div>
+
+                <div className="flex">
+                  <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-[#E7F3EF] text-[#1B4332] dark:bg-primary/20 dark:text-primary border border-[#1B4332]/5">
+                    {currentPrayer?.isTomorrow ? 'STARTS' : 'ENDS'} IN {currentPrayer?.timeLeft.toUpperCase()}
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -81,10 +101,10 @@ export default function CurrentPrayerWidget() {
 
         <motion.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-muted-foreground"
+          transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+          className="text-muted-foreground/40 p-1"
         >
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-6 h-6" />
         </motion.div>
       </div>
 
@@ -130,7 +150,9 @@ export default function CurrentPrayerWidget() {
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={isPast ? 'grayscale opacity-50' : ''}>{prayer.icon}</span>
+                        <div className={isPast ? 'opacity-50 grayscale' : ''}>
+                          <PrayerIcon prayer={prayer.key} size="sm" />
+                        </div>
                         <span
                           className={`text-sm font-medium ${
                             isActive

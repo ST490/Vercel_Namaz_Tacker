@@ -4,6 +4,7 @@ import { LayoutDashboard, RotateCcw, Compass, Settings, Moon, Sun, LogOut, Ghost
 import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
+import AppLogo from '@/components/ui/AppLogo';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Today' },
@@ -23,9 +24,9 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl">☪️</span>
+            <AppLogo className="w-7 h-7 drop-shadow-sm" />
             <h1 className="font-heading text-xl font-bold text-foreground tracking-tight">
-              Namaz Tracker
+              DeenHabit
             </h1>
           </div>
 

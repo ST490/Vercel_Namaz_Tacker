@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, User, Lock, LogIn, UserPlus, Ghost } from 'lucide-react';
+import AppLogo from '@/components/ui/AppLogo';
 
 export default function LoginPage() {
   const { login, register, loginAsGuest } = useAuth();
@@ -59,9 +60,9 @@ export default function LoginPage() {
             transition={{ delay: 0.1, duration: 0.4 }}
             className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 mb-4 shadow-lg"
           >
-            <span className="text-4xl">☪️</span>
+            <AppLogo className="w-12 h-12" />
           </motion.div>
-          <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">Namaz Tracker</h1>
+          <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">DeenHabit</h1>
           <p className="text-muted-foreground text-sm mt-1">Track your daily prayers & consistency</p>
         </div>
 

@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ACHIEVEMENTS, computeStreak, computeLongestStreak } from '@/lib/prayerUtils';
-import { usePrayerTimes } from '@/hooks/usePrayerTimes';
-import { format } from 'date-fns';
-import { Lock, Clock, CalendarDays, Loader2 } from 'lucide-react';
+import { usePrayerTimes, getCurrentPrayer } from '@/hooks/usePrayerTimes';
+import { format, parse } from 'date-fns';
+import { Lock, Clock, CalendarDays, Loader2, Compass, X } from 'lucide-react';
 import TasbeehCounter from '@/components/tracker/TasbeehCounter';
 
 const PRAYER_ORDER = [
@@ -16,73 +16,52 @@ const PRAYER_ORDER = [
   { key: 'isha',    label: 'Isha',    icon: '🌙' },
 ];
 
-// ── Utility Widget: Date Card ──────────────────────────────────────────────
-function DateWidget({ hijri, gregorian }) {
-  const today = new Date();
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="rounded-2xl p-4 border border-border bg-card flex flex-col gap-1"
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <CalendarDays className="w-4 h-4 text-primary" />
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Date</span>
-      </div>
-      <p className="text-sm font-bold text-foreground">{format(today, 'MMMM d, yyyy')}</p>
-      <p className="text-xs text-muted-foreground">{format(today, 'EEEE')}</p>
-      <div className="mt-2 pt-2 border-t border-border/50">
-        {hijri ? (
-          <>
-            <p className="text-sm font-bold text-primary" dir="rtl">
-              {hijri.day} {hijri.monthAr}
-            </p>
-            <p className="text-xs text-muted-foreground">{hijri.formatted}</p>
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground italic">Loading Hijri date…</p>
-        )}
-      </div>
-    </motion.div>
-  );
-}
+import FullCalendarWidget from '@/components/tracker/FullCalendarWidget';
 
-// ── Utility Widget: Timings Card ──────────────────────────────────────────
+import PrayerIcon from '@/components/tracker/PrayerIcon';
+
+// ── Utility Widget: Timings Card (Fullscreen) ─────────────────────────────
 function TimingsWidget({ timings, isLoading }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.05 }}
-      className="rounded-2xl p-4 border border-border bg-card flex flex-col gap-1"
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <Clock className="w-4 h-4 text-primary" />
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Today's Timings</span>
+    <div className="rounded-3xl p-6 border border-border bg-card flex flex-col gap-2 shadow-lg w-full">
+      <div className="flex flex-col items-center text-center gap-2 mb-4">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
+          <Clock className="w-6 h-6" />
+        </div>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Prayer Timings</span>
       </div>
+
       {isLoading ? (
-        <div className="space-y-1.5 mt-1">
+        <div className="space-y-3 mt-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-5 rounded bg-secondary animate-pulse" />
+            <div key={i} className="h-12 rounded-xl bg-secondary animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="space-y-1 mt-1">
+        <div className="space-y-3 mt-2">
           {PRAYER_ORDER.map(p => (
-            <div key={p.key} className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <span>{p.icon}</span> {p.label}
-              </span>
-              <span className="text-xs font-semibold text-foreground tabular-nums">
-                {timings?.[p.key] || '--:--'}
-              </span>
+            <div key={p.key} className="flex items-center justify-between p-3 rounded-xl bg-secondary/30">
+              <div className="flex items-center gap-3">
+                <PrayerIcon prayer={p.key} size="sm" />
+                <span className="text-sm font-bold text-foreground">
+                  {p.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-sm font-bold text-foreground tabular-nums">
+                  {timings?.[p.key] ? format(parse(timings[p.key].split(' ')[0], 'HH:mm', new Date()), 'h:mm a') : '--:--'}
+                </span>
+              </div>
             </div>
           ))}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
+
+import QiblaPointer from '@/components/tracker/QiblaPointer';
 
 // ── Main Hub Page ─────────────────────────────────────────────────────────
 export default function Hub() {
@@ -153,6 +132,8 @@ export default function Hub() {
 
   const unlockedCount = Object.values(achievementProgress).filter(a => a.unlocked).length;
 
+  const [activeFullscreen, setActiveFullscreen] = useState(null);
+
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -167,24 +148,85 @@ export default function Hub() {
           Utilities
         </h3>
 
-        {/* 2-col grid for Date + Timings */}
+        {/* Utilities Grid - 2x2 Layout (Slightly rectangular) */}
         <div className="grid grid-cols-2 gap-3">
-          <DateWidget hijri={prayerData?.hijri} gregorian={prayerData?.gregorian} />
-          <TimingsWidget timings={prayerData?.timings} isLoading={timingsLoading} />
-        </div>
+          {/* Date Preview Card */}
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setActiveFullscreen('date')}
+            className="aspect-[5/4] rounded-2xl p-4 border border-indigo-500/20 bg-indigo-500/10 cursor-pointer shadow-sm hover:bg-indigo-500/20 transition-colors flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <CalendarDays className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-wider">Date</span>
+              </div>
+              <span className="text-2xl font-black text-foreground leading-tight block truncate">{format(new Date(), 'MMM d, yy')}</span>
+              <span className="text-sm text-muted-foreground">{format(new Date(), 'EEEE')}</span>
+            </div>
 
-        {/* Full-width Tasbeeh Counter */}
-        <div className="rounded-2xl border border-border bg-card overflow-hidden">
-          <div className="px-4 pt-4 pb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📿</span>
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">Tasbeeh Counter</h4>
-                <p className="text-[10px] text-muted-foreground">Digital dhikr counter</p>
+            <div className="pt-2 border-t border-indigo-500/20">
+              <div className="text-base font-bold text-indigo-600 dark:text-indigo-400 truncate" dir="rtl">
+                {prayerData?.hijri ? `${prayerData.hijri.day} ${prayerData.hijri.monthAr}` : ''}
+              </div>
+              <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                {prayerData?.hijri ? prayerData.hijri.formatted : 'Loading...'}
               </div>
             </div>
-          </div>
-          <TasbeehCounter />
+          </motion.div>
+
+          {/* Timings Preview Card */}
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setActiveFullscreen('timings')}
+            className="aspect-[5/4] rounded-2xl p-4 border border-amber-500/20 bg-amber-500/10 flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm hover:bg-amber-500/20 transition-colors"
+          >
+            <div className="flex items-center justify-center text-amber-500 dark:text-amber-400 mb-1">
+              {timingsLoading || !prayerData ? (
+                <Clock className="w-10 h-10" />
+              ) : (
+                <PrayerIcon prayer={getCurrentPrayer(prayerData.timings)?.key} size="lg" />
+              )}
+            </div>
+            <div className="text-center">
+              <h4 className="text-lg font-black text-foreground">
+                {timingsLoading || !prayerData ? 'Timings' : getCurrentPrayer(prayerData.timings)?.label}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {timingsLoading || !prayerData ? 'Loading...' : format(parse(prayerData.timings[getCurrentPrayer(prayerData.timings).key].split(' ')[0], 'HH:mm', new Date()), 'h:mm a')}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Qibla Preview Card */}
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setActiveFullscreen('qibla')}
+            className="aspect-[5/4] rounded-2xl p-4 border border-emerald-500/20 bg-emerald-500/10 flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm hover:bg-emerald-500/20 transition-colors"
+          >
+            <div className="flex items-center justify-center text-emerald-500 dark:text-emerald-400 mb-1">
+              <Compass className="w-10 h-10" />
+            </div>
+            <div className="text-center">
+              <h4 className="text-lg font-black text-foreground">Qibla</h4>
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-300/70 mt-0.5">Find Direction</p>
+            </div>
+          </motion.div>
+
+          {/* Tasbeeh Preview Card */}
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setActiveFullscreen('tasbeeh')}
+            className="aspect-[5/4] rounded-2xl p-4 border border-purple-500/20 bg-purple-500/10 flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm hover:bg-purple-500/20 transition-colors"
+          >
+            <div className="flex items-center justify-center mb-1">
+              <span className="text-4xl drop-shadow-sm">📿</span>
+            </div>
+            <div className="text-center">
+              <h4 className="text-lg font-black text-foreground">Tasbeeh</h4>
+              <p className="text-[11px] text-purple-600 dark:text-purple-300/70 mt-0.5">Dhikr Counter</p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -253,6 +295,52 @@ export default function Hub() {
           })}
         </div>
       </section>
+
+      {/* ── Fullscreen Overlay ── */}
+      <AnimatePresence>
+        {activeFullscreen && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col p-4 md:p-8 overflow-y-auto"
+          >
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setActiveFullscreen(null)}
+                className="w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full pb-12">
+              {activeFullscreen === 'date' && (
+                <div className="w-full">
+                  <FullCalendarWidget />
+                </div>
+              )}
+              {activeFullscreen === 'timings' && (
+                <TimingsWidget timings={prayerData?.timings} isLoading={timingsLoading} />
+              )}
+              {activeFullscreen === 'qibla' && (
+                <div className="w-full">
+                  <QiblaPointer />
+                </div>
+              )}
+              {activeFullscreen === 'tasbeeh' && (
+                <div className="w-full rounded-2xl border border-border bg-card overflow-hidden shadow-lg">
+                   <div className="px-4 pt-4 pb-2 border-b border-border/50 text-center">
+                     <h3 className="text-sm font-bold text-foreground">Tasbeeh Counter</h3>
+                   </div>
+                   <TasbeehCounter />
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
