@@ -1,8 +1,9 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 
 const LocationContext = createContext();
 
 const LOCATION_KEY = 'namaz_location';
+const SCHOOL_KEY = 'namaz_school';
 
 function loadLocation() {
   try {
@@ -12,8 +13,17 @@ function loadLocation() {
   }
 }
 
+function loadSchool() {
+  try {
+    return localStorage.getItem(SCHOOL_KEY) || '0';
+  } catch {
+    return '0';
+  }
+}
+
 export const LocationProvider = ({ children }) => {
   const [location, setLocationState] = useState(() => loadLocation());
+  const [school, setSchoolState] = useState(() => loadSchool());
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState(null);
 
@@ -21,6 +31,11 @@ export const LocationProvider = ({ children }) => {
     localStorage.setItem(LOCATION_KEY, JSON.stringify(loc));
     setLocationState(loc);
   };
+
+  const setSchool = useCallback((val) => {
+    localStorage.setItem(SCHOOL_KEY, val);
+    setSchoolState(val);
+  }, []);
 
   const setCoords = useCallback((lat, lon) => {
     saveLocation({ lat, lon, city: null, type: 'coords' });
@@ -63,10 +78,12 @@ export const LocationProvider = ({ children }) => {
   return (
     <LocationContext.Provider value={{
       location,
+      school,
       isLocating,
       locationError,
       setCoords,
       setCity,
+      setSchool,
       requestGeolocation,
       reset,
     }}>

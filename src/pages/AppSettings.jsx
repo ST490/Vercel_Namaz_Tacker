@@ -6,12 +6,13 @@ import { Moon, Sun, Info, Heart, User, LogOut, MapPin, Loader2, Navigation } fro
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function AppSettings() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const { location, isLocating, locationError, requestGeolocation, setCity } = useLocation();
+  const { location, school, setSchool, isLocating, locationError, requestGeolocation, setCity } = useLocation();
   const { toast } = useToast();
 
   const [cityInput, setCityInput] = useState(location?.city || '');
@@ -121,6 +122,22 @@ export default function AppSettings() {
               Save
             </Button>
           </div>
+        </div>
+
+        {/* School of Thought Setting */}
+        <div className="space-y-2 pt-2 border-t border-border">
+          <label className="text-xs font-medium text-muted-foreground block">
+            Asr Calculation Method (School of Thought)
+          </label>
+          <Select value={school} onValueChange={(val) => setSchool(val)}>
+            <SelectTrigger className="w-full h-9">
+              <SelectValue placeholder="Select School" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">Standard (Shafi, Maliki, Hanbali)</SelectItem>
+              <SelectItem value="1">Hanafi</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

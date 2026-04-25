@@ -4,7 +4,7 @@ import { useLocation } from '@/lib/LocationContext';
 
 const BASE = 'https://api.aladhan.com/v1';
 
-async function fetchTimings(location, dateStr) {
+async function fetchTimings(location, dateStr, school) {
   const [day, month, year] = dateStr.split('-'); // yyyy-MM-dd → reformat to DD-MM-YYYY
   const aladhanDate = `${year.slice(-2) ? dateStr : dateStr}`; // keep as is, API accepts both
 
@@ -13,14 +13,15 @@ async function fetchTimings(location, dateStr) {
   const ddmmyyyy = format(dateObj, 'dd-MM-yyyy');
 
   let url;
+  const schoolParam = school !== undefined ? school : '0';
   if (location && location.type === 'coords' && location.lat && location.lon) {
-    url = `${BASE}/timings/${ddmmyyyy}?latitude=${location.lat}&longitude=${location.lon}&method=1`;
+    url = `${BASE}/timings/${ddmmyyyy}?latitude=${location.lat}&longitude=${location.lon}&method=1&school=${schoolParam}`;
   } else if (location && location.type === 'city' && location.city) {
     const encodedCity = encodeURIComponent(location.city);
-    url = `${BASE}/timingsByCity/${ddmmyyyy}?city=${encodedCity}&method=1`;
+    url = `${BASE}/timingsByCity/${ddmmyyyy}?city=${encodedCity}&method=1&school=${schoolParam}`;
   } else {
     // Default: Karachi as a sensible Islamic city default
-    url = `${BASE}/timingsByCity/${ddmmyyyy}?city=Karachi&country=Pakistan&method=1`;
+    url = `${BASE}/timingsByCity/${ddmmyyyy}?city=Karachi&country=Pakistan&method=1&school=${schoolParam}`;
   }
 
   const res = await fetch(url);
@@ -59,7 +60,7 @@ async function fetchTimings(location, dateStr) {
  * Results are cached for 1 hour (prayer times don't change within a day).
  */
 export function usePrayerTimes(dateStr) {
-  const { location } = useLocation();
+  const { location, school } = useLocation();
   const targetDate = dateStr || format(new Date(), 'yyyy-MM-dd');
 
   // Build a stable query key that changes when location changes
@@ -68,8 +69,8 @@ export function usePrayerTimes(dateStr) {
     : 'default';
 
   return useQuery({
-    queryKey: ['prayer-timings', targetDate, locationKey],
-    queryFn: () => fetchTimings(location, targetDate),
+    queryKey: ['prayer-timings', targetDate, locationKey, school],
+    queryFn: () => fetchTimings(location, targetDate, school),
     staleTime: 1000 * 60 * 60,       // 1 hour
     gcTime: 1000 * 60 * 60 * 24,     // 24 hours
     retry: 2,
