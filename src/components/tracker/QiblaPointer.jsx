@@ -285,3 +285,6 @@ export default function QiblaPointer() {
           Open on mobile for live compass tracking
         </p>
       )}
+    </div>
+  );
+}
