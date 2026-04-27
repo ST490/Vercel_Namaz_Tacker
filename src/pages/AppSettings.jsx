@@ -37,7 +37,7 @@ export default function AppSettings() {
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <h2 className="font-heading text-2xl font-bold text-foreground">Settings</h2>
+        <h2 className="font-heading text-2xl font-bold text-primary">Settings</h2>
       </div>
 
       {/* ── Account ── */}

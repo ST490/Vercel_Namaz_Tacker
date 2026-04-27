@@ -67,7 +67,7 @@ export default function PrayerCard({ prayer, log, onToggle, onUpdateDetail }) {
           <PrayerIcon prayer={prayer} size="md" />
           
           <div className="flex-1 min-w-0">
-            <h3 className={`text-base font-bold tracking-tight transition-colors ${
+            <h3 className={`text-base font-cutoff font-bold tracking-tight transition-colors ${
               isCompleted ? 'text-primary' : 'text-foreground'
             }`}>
               {PRAYER_LABELS[prayer]}

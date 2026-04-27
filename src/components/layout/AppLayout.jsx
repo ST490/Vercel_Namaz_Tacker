@@ -25,8 +25,8 @@ export default function AppLayout() {
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AppLogo className="w-7 h-7 drop-shadow-sm" />
-            <h1 className="font-heading text-xl font-bold text-foreground tracking-tight">
-              DeenHabit
+            <h1 className="font-heading text-xl font-bold text-primary tracking-tight">
+              Deen Habits
             </h1>
           </div>
 

@@ -78,7 +78,7 @@ export default function CurrentPrayerWidget() {
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-2xl font-extrabold tracking-tight text-[#1B4332] dark:text-primary">
+                  <h3 className="text-2xl font-cutoff font-extrabold tracking-tight text-[#1B4332] dark:text-primary">
                     {currentPrayer?.label}
                   </h3>
                   <span className="text-muted-foreground/30 text-xl font-light">•</span>
@@ -154,12 +154,12 @@ export default function CurrentPrayerWidget() {
                           <PrayerIcon prayer={prayer.key} size="sm" />
                         </div>
                         <span
-                          className={`text-sm font-medium ${
+                          className={`text-sm font-cutoff ${
                             isActive
                               ? 'text-primary font-bold'
                               : isPast
                               ? 'text-muted-foreground line-through'
-                              : 'text-foreground'
+                              : 'text-foreground font-medium'
                           }`}
                         >
                           {prayer.label}
@@ -173,8 +173,8 @@ export default function CurrentPrayerWidget() {
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3 h-3 text-muted-foreground" />
                         <span
-                          className={`text-sm tabular-nums ${
-                            isActive ? 'text-primary font-bold' : isPast ? 'text-muted-foreground' : 'text-foreground'
+                          className={`text-sm font-cutoff tabular-nums ${
+                            isActive ? 'text-primary font-bold' : isPast ? 'text-muted-foreground' : 'text-foreground font-medium'
                           }`}
                         >
                           {timeStr}

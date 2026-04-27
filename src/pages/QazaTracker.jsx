@@ -101,7 +101,7 @@ export default function QazaTracker() {
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <h2 className="font-heading text-2xl font-bold text-foreground">Qaza Tracker</h2>
+        <h2 className="font-heading text-2xl font-bold text-primary">Qaza Tracker</h2>
         <p className="text-xs text-muted-foreground mt-1">Make up missed prayers systematically</p>
       </div>
 
@@ -145,7 +145,7 @@ export default function QazaTracker() {
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{PRAYER_ICONS[qaza.prayer_name]}</span>
                   <div>
-                    <h4 className="font-semibold text-sm">{PRAYER_LABELS[qaza.prayer_name]}</h4>
+                    <h4 className="font-cutoff font-bold text-sm">{PRAYER_LABELS[qaza.prayer_name]}</h4>
                     <p className="text-[10px] text-muted-foreground">
                       {isComplete ? 'All caught up! ✨' : `${remaining} remaining`}
                     </p>

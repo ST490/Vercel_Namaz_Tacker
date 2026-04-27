@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ACHIEVEMENTS, computeStreak, computeLongestStreak } from '@/lib/prayerUtils';
 import { usePrayerTimes, getCurrentPrayer } from '@/hooks/usePrayerTimes';
 import { format, parse } from 'date-fns';
-import { Lock, Clock, CalendarDays, Loader2, Compass, X } from 'lucide-react';
+import { Lock, Clock, CalendarDays, Compass, X, BookOpen } from 'lucide-react';
 import TasbeehCounter from '@/components/tracker/TasbeehCounter';
 
 const PRAYER_ORDER = [
@@ -43,13 +43,13 @@ function TimingsWidget({ timings, isLoading }) {
             <div key={p.key} className="flex items-center justify-between p-3 rounded-xl bg-secondary/30">
               <div className="flex items-center gap-3">
                 <PrayerIcon prayer={p.key} size="sm" />
-                <span className="text-sm font-bold text-foreground">
+                <span className="text-sm font-cutoff font-bold text-foreground">
                   {p.label}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-sm font-bold text-foreground tabular-nums">
+                <span className="text-sm font-cutoff font-bold text-foreground tabular-nums">
                   {timings?.[p.key] ? format(parse(timings[p.key].split(' ')[0], 'HH:mm', new Date()), 'h:mm a') : '--:--'}
                 </span>
               </div>
@@ -62,6 +62,7 @@ function TimingsWidget({ timings, isLoading }) {
 }
 
 import QiblaPointer from '@/components/tracker/QiblaPointer';
+import QuranWidget from '@/components/tracker/QuranWidget';
 
 // ── Main Hub Page ─────────────────────────────────────────────────────────
 export default function Hub() {
@@ -138,7 +139,7 @@ export default function Hub() {
     <div className="space-y-6">
       {/* ── Header ── */}
       <div className="text-center">
-        <h2 className="font-heading text-2xl font-bold text-foreground">Hub</h2>
+        <h2 className="font-heading text-2xl font-bold text-primary">Hub</h2>
         <p className="text-xs text-muted-foreground mt-1">Utilities &amp; Achievements</p>
       </div>
 
@@ -227,6 +228,24 @@ export default function Hub() {
               <p className="text-[11px] text-purple-600 dark:text-purple-300/70 mt-0.5">Dhikr Counter</p>
             </div>
           </motion.div>
+
+          {/* Quran Preview Card */}
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setActiveFullscreen('quran')}
+            className="col-span-2 aspect-[5/2] rounded-2xl p-5 border border-rose-500/20 bg-rose-500/10 flex items-center justify-between cursor-pointer shadow-sm hover:bg-rose-500/20 transition-colors overflow-hidden relative"
+          >
+            <div className="flex flex-col justify-center relative z-10">
+              <h4 className="text-xl font-black text-foreground mb-1">Holy Quran</h4>
+              <p className="text-xs text-rose-600 dark:text-rose-300/80 font-medium">Continue Reading</p>
+            </div>
+            <div className="relative z-10 w-14 h-14 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <BookOpen size={26} strokeWidth={2.5} />
+            </div>
+            <div className="absolute right-[-5%] bottom-[-30%] text-rose-500/5 rotate-[-15deg] pointer-events-none">
+               <BookOpen size={140} fill="currentColor" stroke="none" />
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -298,7 +317,7 @@ export default function Hub() {
 
       {/* ── Fullscreen Overlay ── */}
       <AnimatePresence>
-        {activeFullscreen && (
+        {activeFullscreen && activeFullscreen !== 'quran' && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -341,6 +360,11 @@ export default function Hub() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Quran Fullscreen ── */}
+      {activeFullscreen === 'quran' && (
+        <QuranWidget onClose={() => setActiveFullscreen(null)} />
+      )}
     </div>
   );
 }

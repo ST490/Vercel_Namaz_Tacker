@@ -62,8 +62,8 @@ export default function LoginPage() {
           >
             <AppLogo className="w-12 h-12" />
           </motion.div>
-          <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">DeenHabit</h1>
-          <p className="text-muted-foreground text-sm mt-1">Track your daily prayers & consistency</p>
+          <h1 className="font-heading text-3xl font-bold text-primary tracking-tight">Deen Habits</h1>
+          <p className="text-muted-foreground text-sm mt-1">Track your spiritual journey</p>
         </div>
 
         {/* Card */}

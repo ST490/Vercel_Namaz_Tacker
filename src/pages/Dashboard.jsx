@@ -133,7 +133,7 @@ export default function Dashboard() {
           onClick={() => setShowCalendar(true)}
           className="inline-flex items-center gap-1.5 group"
         >
-          <h2 className="font-heading text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+          <h2 className="font-heading text-2xl font-bold text-primary transition-colors">
             {isViewingToday
               ? format(new Date(), 'MMMM d, yyyy')
               : format(selectedDate, 'MMMM d, yyyy')}
