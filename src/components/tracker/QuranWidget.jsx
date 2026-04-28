@@ -32,7 +32,7 @@ const PageTurnSound = () => {
   } catch(e) {}
 };
 
-const PageComponent = React.memo(React.forwardRef(({ pageNumber, width, height, onPageClick, isVisible, isPreload }, ref) => {
+const PageComponent = React.memo(React.forwardRef(({ pageNumber, width, height, onPageClick, isVisible, isPreload, isDocumentLoaded }, ref) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
@@ -48,11 +48,11 @@ const PageComponent = React.memo(React.forwardRef(({ pageNumber, width, height, 
         }
       }}
     >
-      {(isVisible || isPreload) ? (
+      {(isVisible || isPreload) && isDocumentLoaded ? (
         <>
           {!isLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#fdfaf3] z-10">
-              <Loader2 className="w-8 h-8 text-amber-600/20 animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center bg-[#fdfaf3] z-10 animate-pulse">
+              <div className="w-1/2 h-1/2 bg-amber-600/5 rounded-full" />
             </div>
           )}
           <Page 
@@ -62,17 +62,20 @@ const PageComponent = React.memo(React.forwardRef(({ pageNumber, width, height, 
             renderTextLayer={false}
             onLoadSuccess={() => setIsLoaded(true)}
             loading={null}
-            className={`w-full h-full flex items-center justify-center transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`w-full h-full flex items-center justify-center transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
         </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-amber-600/5">
-          <BookOpen size={width * 0.2} />
+        <div className="w-full h-full flex flex-col items-center justify-center bg-[#fdfaf3] p-8 gap-4 overflow-hidden">
+          <div className="w-full h-8 bg-amber-600/5 rounded animate-pulse" />
+          <div className="flex-1 w-full bg-amber-600/[0.02] rounded-lg animate-pulse" />
+          <div className="w-2/3 h-4 bg-amber-600/5 rounded animate-pulse" />
+          <BookOpen className="absolute text-amber-600/[0.03] w-1/2 h-1/2" />
         </div>
       )}
       
-      {/* Page Number Overlay for internal reference */}
-      <div className="absolute bottom-2 right-2 text-[10px] text-black/5 font-mono select-none">
+      {/* Page Number Overlay for instant feedback */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[11px] text-amber-900/20 font-bold font-serif select-none">
         {pageNumber}
       </div>
     </div>
@@ -84,12 +87,14 @@ const PageComponent = React.memo(React.forwardRef(({ pageNumber, width, height, 
     prevProps.isVisible === nextProps.isVisible &&
     prevProps.isPreload === nextProps.isPreload &&
     prevProps.width === nextProps.width &&
-    prevProps.height === nextProps.height
+    prevProps.height === nextProps.height &&
+    prevProps.isDocumentLoaded === nextProps.isDocumentLoaded
   );
 });
 
 export default function QuranWidget({ onClose }) {
-  const [numPages, setNumPages] = useState(null);
+  const [isDocumentLoaded, setIsDocumentLoaded] = useState(false);
+  const [numPages, setNumPages] = useState(604); // Default to 604 for instant UI
   const [pageNumber, setPageNumber] = useState(() => {
     return parseInt(localStorage.getItem('quran_last_page')) || 1;
   });
@@ -133,6 +138,7 @@ export default function QuranWidget({ onClose }) {
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
+    setIsDocumentLoaded(true);
   };
 
   const handlePageTurn = (e) => {
@@ -258,12 +264,7 @@ export default function QuranWidget({ onClose }) {
             <Document
               file="/quran.pdf"
               onLoadSuccess={onDocumentLoadSuccess}
-              loading={
-                <div className="flex flex-col items-center text-white/50 animate-pulse gap-3">
-                  <BookOpen size={40} className="opacity-50" />
-                  <span>Loading Quran...</span>
-                </div>
-              }
+              loading={null} // Don't block children
               className="w-full h-full"
             >
               <HTMLFlipBook 
@@ -302,6 +303,7 @@ export default function QuranWidget({ onClose }) {
                       height={dimensions.height}
                       isVisible={isVisible}
                       isPreload={isPreload}
+                      isDocumentLoaded={isDocumentLoaded}
                       onPageClick={() => setShowUi(prev => !prev)}
                     />
                   );
