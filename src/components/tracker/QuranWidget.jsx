@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Document, Page, pdfjs } from 'react-pdf';
 import HTMLFlipBook from 'react-pageflip';
-import { Bookmark, List, X, Volume2, VolumeX, BookOpen, Trash2, Edit2, Plus } from 'lucide-react';
+import { Bookmark, List, X, Volume2, VolumeX, BookOpen, Trash2, Edit2, Plus, Loader2 } from 'lucide-react';
 import { SURAH_MAPPING, PARA_MAPPING, TAJWEED_LEGEND } from '@/lib/quranMapping';
+import { debounce } from '@/lib/utils';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -31,14 +32,15 @@ const PageTurnSound = () => {
   } catch(e) {}
 };
 
-const PageComponent = React.forwardRef(({ pageNumber, width, height, onPageClick }, ref) => {
+const PageComponent = React.memo(React.forwardRef(({ pageNumber, width, height, onPageClick, isVisible, isPreload }, ref) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
     <div 
       ref={ref} 
-      className="bg-[#fdfaf3] flex items-center justify-center shadow-lg border border-black/10" 
+      className="bg-[#fdfaf3] flex items-center justify-center shadow-lg border border-black/10 relative" 
       style={{ width, height }}
       onClick={(e) => {
-        // Only trigger UI toggle if we didn't click too close to the edges (to allow flipping)
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
         if (x > rect.width * 0.15 && x < rect.width * 0.85) {
@@ -46,14 +48,43 @@ const PageComponent = React.forwardRef(({ pageNumber, width, height, onPageClick
         }
       }}
     >
-      <Page 
-        pageNumber={pageNumber} 
-        width={width}
-        renderAnnotationLayer={false}
-        renderTextLayer={false}
-        className="w-full h-full flex items-center justify-center"
-      />
+      {(isVisible || isPreload) ? (
+        <>
+          {!isLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-[#fdfaf3] z-10">
+              <Loader2 className="w-8 h-8 text-amber-600/20 animate-spin" />
+            </div>
+          )}
+          <Page 
+            pageNumber={pageNumber} 
+            width={width}
+            renderAnnotationLayer={false}
+            renderTextLayer={false}
+            onLoadSuccess={() => setIsLoaded(true)}
+            loading={null}
+            className={`w-full h-full flex items-center justify-center transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-amber-600/5">
+          <BookOpen size={width * 0.2} />
+        </div>
+      )}
+      
+      {/* Page Number Overlay for internal reference */}
+      <div className="absolute bottom-2 right-2 text-[10px] text-black/5 font-mono select-none">
+        {pageNumber}
+      </div>
     </div>
+  );
+}), (prevProps, nextProps) => {
+  // Only re-render if essential props change
+  return (
+    prevProps.pageNumber === nextProps.pageNumber &&
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.isPreload === nextProps.isPreload &&
+    prevProps.width === nextProps.width &&
+    prevProps.height === nextProps.height
   );
 });
 
@@ -71,7 +102,9 @@ export default function QuranWidget({ onClose }) {
   });
   
   const bookRef = useRef();
+  const pageCache = useRef(new Set());
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('quran_last_page', pageNumber);
@@ -103,7 +136,8 @@ export default function QuranWidget({ onClose }) {
   };
 
   const handlePageTurn = (e) => {
-    setPageNumber(e.data + 1);
+    const newPage = e.data + 1;
+    setPageNumber(newPage);
     if (soundEnabled) {
       PageTurnSound();
     }
@@ -111,7 +145,13 @@ export default function QuranWidget({ onClose }) {
 
   const jumpToPage = (page) => {
     if (bookRef.current) {
+      setIsNavigating(true);
+      // Use turnToPage with a smaller animation time if possible, or just jump
+      // Since flippingTime is fixed at mount for react-pageflip, we just trigger it
       bookRef.current.pageFlip().turnToPage(page - 1);
+      
+      // Reset navigation state after animation
+      setTimeout(() => setIsNavigating(false), 500);
     }
     setShowMenu(false);
   };
@@ -196,7 +236,23 @@ export default function QuranWidget({ onClose }) {
       </AnimatePresence>
 
       {/* Main Reader */}
-      <div className="flex-1 w-full h-full flex items-center justify-center bg-[#111] z-0 overflow-hidden">
+      <div className="flex-1 w-full h-full flex items-center justify-center bg-[#111] z-0 overflow-hidden relative">
+        <AnimatePresence>
+          {isNavigating && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                <span className="text-sm font-medium text-white/70">Jumping to page...</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {dimensions.width > 0 && (
           <div style={{ width: dimensions.width, height: dimensions.height }} className="relative shadow-2xl">
             <Document
@@ -226,21 +282,30 @@ export default function QuranWidget({ onClose }) {
                 startPage={pageNumber - 1}
                 className="w-full h-full"
                 drawShadow={true}
-                flippingTime={800}
+                flippingTime={400}
                 usePortrait={true}
                 startZIndex={0}
                 autoSize={true}
                 clickEventForward={true}
               >
-                {Array.from(new Array(numPages || 604), (el, index) => (
-                  <PageComponent 
-                    key={`page_${index + 1}`} 
-                    pageNumber={index + 1} 
-                    width={dimensions.width}
-                    height={dimensions.height}
-                    onPageClick={() => setShowUi(prev => !prev)}
-                  />
-                ))}
+                {Array.from(new Array(numPages || 604), (el, index) => {
+                  const pNum = index + 1;
+                  // Render only if within range
+                  const isVisible = pNum === pageNumber;
+                  const isPreload = Math.abs(pNum - pageNumber) <= 2;
+                  
+                  return (
+                    <PageComponent 
+                      key={`page_${pNum}`} 
+                      pageNumber={pNum} 
+                      width={dimensions.width}
+                      height={dimensions.height}
+                      isVisible={isVisible}
+                      isPreload={isPreload}
+                      onPageClick={() => setShowUi(prev => !prev)}
+                    />
+                  );
+                })}
               </HTMLFlipBook>
             </Document>
           </div>
