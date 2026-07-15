@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from '@/App'
+import App from '@/App.jsx'
 import '@/index.css'
 import { seedIfNeeded } from '@/lib/seedData';
 import { initStorage } from '@/lib/storage';
