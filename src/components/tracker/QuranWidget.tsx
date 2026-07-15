@@ -74,7 +74,6 @@ export default function QuranWidget({ onClose }) {
     return storage.get('quran_bookmarks') || [];
   });
   const abortRef = useRef(null);
-  const contentRef = useRef(null);
 
   useEffect(() => {
     storage.set('quran_last_page', pageNumber);
