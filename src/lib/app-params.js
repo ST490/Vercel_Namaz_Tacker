@@ -1,6 +1,6 @@
-import { storage as storageAdapter } from './storage';
-
 const isNode = typeof window === 'undefined';
+const windowObj = isNode ? { localStorage: new Map() } : window;
+const storage = windowObj.localStorage;
 
 const toSnakeCase = (str) => {
 	return str.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -20,14 +20,14 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 		window.history.replaceState({}, document.title, newUrl);
 	}
 	if (searchParam) {
-		storageAdapter.set(storageKey, searchParam);
+		storage.setItem(storageKey, searchParam);
 		return searchParam;
 	}
 	if (defaultValue) {
-		storageAdapter.set(storageKey, defaultValue);
+		storage.setItem(storageKey, defaultValue);
 		return defaultValue;
 	}
-	const storedValue = storageAdapter.get(storageKey);
+	const storedValue = storage.getItem(storageKey);
 	if (storedValue) {
 		return storedValue;
 	}
@@ -36,8 +36,8 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 
 const getAppParams = () => {
 	if (getAppParamValue("clear_access_token") === 'true') {
-		storageAdapter.remove('base44_access_token');
-		storageAdapter.remove('token');
+		storage.removeItem('base44_access_token');
+		storage.removeItem('token');
 	}
 	return {
 		appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
