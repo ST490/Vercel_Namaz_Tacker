@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, List, Bookmark, ChevronLeft, ChevronRight, BookOpen, Languages, Trash2, Edit2, Plus, Volume2, VolumeX } from 'lucide-react';
 import { SURAH_MAPPING, PARA_MAPPING, TAJWEED_LEGEND } from '@/lib/quranMapping';
@@ -6,7 +6,7 @@ import { storage } from '@/lib/storage';
 
 const QURAN_API = 'https://api.quran.com/api/v4';
 
-async function fetchJSON(url, signal?) {
+async function fetchJSON(url, signal) {
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
@@ -54,234 +54,69 @@ const PageTurnSound = () => {
     gainNode.connect(audioCtx.destination);
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.1);
-  } catch (e) { }
+  } catch(e) {}
 };
-
-const TOTAL_PAGES = 604;
-
-const TAJWEED_COLORS = {
-  ghunnah: '#EF4444',
-  qalqalah: '#3B82F6',
-  ikhfa: '#10B981',
-  idgham: '#F59E0B',
-  iqlab: '#8B5CF6',
-  silent: '#6B7280',
-};
-
-const QALQALAH_LETTERS = /[qṭbjd]$/i;
-const DEEP_QALQALAH = /[qṭbjd]/i;
-const GHUNNAH_PATTERN = /(?:[iu]nn[ae]|ann[aeiu]|unn[ui]|inn[ui]|ummm?[ae]?|imm[ae]?|amm[aeiu]?)/i;
-const IDGHAM_PATTERN = /^(?:a[lsrwmnb]|bi[lsrwmnb]|fa[lsrwmnb]|li[lsrwmnb]|wa[lsrwmnb])/i;
-const IQLAB_PATTERN = /[aui]nb[auieo]?/i;
-const IKHFA_PATTERN = /[aui]n[tgdjzkqsf]|[aui]n[td]|[aui]n[ṣḍṭ]|[aui]n[zḏ]|[aui]n[ṯ]|[aui]n[ẓ]/i;
-
-function analyzeTajweed(translitText) {
-  if (!translitText) return null;
-  const t = translitText.toLowerCase()
-    .replace(/[ā]/g, 'a').replace(/[ī]/g, 'i').replace(/[ū]/g, 'u')
-    .replace(/[ṣ]/g, 's').replace(/[ḍ]/g, 'd').replace(/[ṭ]/g, 't')
-    .replace(/[ẓ]/g, 'z').replace(/[ḏ]/g, 'd').replace(/[ṯ]/g, 't')
-    .replace(/[ḥ]/g, 'h').replace(/[ġ]/g, 'g').replace(/[‘]/g, "'");
-  if (!t) return null;
-
-  if (GHUNNAH_PATTERN.test(t)) return 'ghunnah';
-  if (IQLAB_PATTERN.test(t)) return 'iqlab';
-  if (IKHFA_PATTERN.test(t)) return 'ikhfa';
-  if (DEEP_QALQALAH.test(t)) return 'qalqalah';
-  if (IDGHAM_PATTERN.test(t)) return 'idgham';
-  if (t.length >= 3 && t.startsWith('a') && t[1] === t[2]) return 'idgham';
-
-  return null;
-}
-
-function mapLinesTo13(verses) {
-  const allWords = [];
-  for (const verse of verses) {
-    for (const word of verse.words) {
-      if (word.char_type_name === 'word') {
-        allWords.push({ ...word, verseNumber: verse.verse_number });
-      }
-    }
-  }
-  if (!allWords.length) return [];
-
-  const lineMap = new Map();
-  for (const w of allWords) {
-    const ln = w.line_number || 1;
-    if (!lineMap.has(ln)) lineMap.set(ln, []);
-    lineMap.get(ln).push(w);
-  }
-  const sortedGroups = [...lineMap.entries()].sort((a, b) => a[0] - b[0]).map(([_, ws]) => ws);
-  while (sortedGroups.length > 13) {
-    let minIdx = 0;
-    let minCount = Infinity;
-    for (let i = 0; i < sortedGroups.length - 1; i++) {
-      const c = sortedGroups[i].length + sortedGroups[i + 1].length;
-      if (c < minCount) { minCount = c; minIdx = i; }
-    }
-    sortedGroups[minIdx] = [...sortedGroups[minIdx], ...sortedGroups[minIdx + 1]];
-    sortedGroups.splice(minIdx + 1, 1);
-  }
-  while (sortedGroups.length < 13) {
-    let maxIdx = 0;
-    let maxCount = 0;
-    for (let i = 0; i < sortedGroups.length; i++) {
-      if (sortedGroups[i].length > maxCount) { maxCount = sortedGroups[i].length; maxIdx = i; }
-    }
-    const mid = Math.ceil(sortedGroups[maxIdx].length / 2);
-    sortedGroups.splice(maxIdx + 1, 0, sortedGroups[maxIdx].splice(mid));
-  }
-  return sortedGroups;
-}
-
-function WordSpan({ word }) {
-  const tajweedClass = useMemo(() => analyzeTajweed(word.transliteration?.text), [word.transliteration?.text]);
-  const color = tajweedClass ? TAJWEED_COLORS[tajweedClass] : null;
-  return (
-    <span
-      className="inline-block mx-[1px] leading-[1.8] md:leading-[2] text-[26px] md:text-[30px] transition-colors relative"
-      style={{
-        fontFamily: "'Scheherazade New', 'Traditional Arabic', 'Arabic Typesetting', serif",
-        color: color || '#e8e6e3',
-      }}
-      title={tajweedClass ? tajweedClass.charAt(0).toUpperCase() + tajweedClass.slice(1) : ''}
-    >
-      {word.code_v1 || word.text}
-    </span>
-  );
-}
-
-function VerseMarker({ number }) {
-  return (
-    <span className="inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full border border-white/15 text-[10px] font-bold text-white/50 ml-1.5 -mt-0.5 shrink-0">
-      {number}
-    </span>
-  );
-}
-
-function SkeletonLine() {
-  const width = 55 + Math.random() * 40;
-  return (
-    <div className="flex justify-end gap-1.5 py-[2px]">
-      <div className="h-[30px] rounded-md bg-white/5 animate-pulse" style={{ width: `${width}%` }} />
-      <div className="w-6 h-6 rounded-full bg-white/5 animate-pulse shrink-0" />
-    </div>
-  );
-}
-
-function PageLines({ lines, verses, showTranslation, showTransliteration }) {
-  const verseMap = useMemo(() => {
-    const m = new Map();
-    for (const v of verses) m.set(v.verse_number, v);
-    return m;
-  }, [verses]);
-
-  return (
-    <div className="space-y-0 w-full">
-      {lines.map((lineWords, lineIdx) => {
-        if (!lineWords.length) return <div key={`line-${lineIdx}`} className="h-[30px] md:h-[34px]" />;
-
-        const verseMarkers = [];
-        const renderedWords = [];
-        let currentVerseNum = null;
-        let wordBuffer = [];
-
-        for (const w of lineWords) {
-          if (w.verseNumber !== currentVerseNum && currentVerseNum !== null) {
-            renderedWords.push({ type: 'group', words: wordBuffer, verseNum: currentVerseNum });
-            wordBuffer = [];
-          }
-          currentVerseNum = w.verseNumber;
-          wordBuffer.push(w);
-
-          const isLastWordOfVerse = !lineWords.some(w2 => w2.verseNumber === currentVerseNum && w2.position > w.position);
-          const isLastInLine = w === lineWords[lineWords.length - 1];
-          if (isLastWordOfVerse || isLastInLine) {
-            if (wordBuffer.length) {
-              renderedWords.push({ type: 'group', words: wordBuffer, verseNum: currentVerseNum, showMarker: isLastWordOfVerse });
-              wordBuffer = [];
-            }
-          }
-        }
-        if (wordBuffer.length) {
-          renderedWords.push({ type: 'group', words: wordBuffer, verseNum: currentVerseNum, showMarker: true });
-        }
-
-        return (
-          <div
-            key={`line-${lineIdx}`}
-            className="flex items-baseline justify-end gap-0 py-[0.5px] sm:py-0"
-            style={{ minHeight: '32px' }}
-          >
-            <div className="flex items-baseline justify-end flex-wrap gap-0" dir="rtl">
-              {renderedWords.map((group, gi) => (
-                <span key={gi} className="inline-flex items-baseline gap-0" dir="rtl">
-                  {group.words.map(w => <WordSpan key={w.id} word={w} />)}
-                  {group.showMarker && (
-                    <VerseMarker number={group.verseNum} />
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function QuranWidget({ onClose }) {
-  const [pageNumber, setPageNumber] = useState(() => parseInt(storage.get('quran_last_page')) || 1);
+  const [pageNumber, setPageNumber] = useState(() => {
+    return parseInt(storage.get('quran_last_page')) || 1;
+  });
   const [chapters, setChapters] = useState([]);
-  const [verses, setVerses] = useState([]);
-  const [ready, setReady] = useState(false);
+  const [verses, setVerses] = useState(() => versesCache.get(parseInt(storage.get('quran_last_page')) || 1) || []);
+  const [loading, setLoading] = useState(!versesCache.has(parseInt(storage.get('quran_last_page')) || 1));
   const [showUi, setShowUi] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [menuTab, setMenuTab] = useState('surah');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showTranslation, setShowTranslation] = useState(true);
   const [showTransliteration, setShowTransliteration] = useState(false);
-  const [bookmarks, setBookmarks] = useState(() => storage.get('quran_bookmarks') || []);
+  const [bookmarks, setBookmarks] = useState(() => {
+    return storage.get('quran_bookmarks') || [];
+  });
   const abortRef = useRef(null);
-  const scrollRef = useRef(null);
+  const contentRef = useRef(null);
 
-  const loadPage = useCallback((page) => {
-    if (versesCache.has(page)) {
-      setVerses(versesCache.get(page));
-      setReady(true);
-      preloadAdjacent(page);
+  useEffect(() => {
+    storage.set('quran_last_page', pageNumber);
+  }, [pageNumber]);
+
+  useEffect(() => {
+    getChapters().then(setChapters).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (versesCache.has(pageNumber)) {
+      setVerses(versesCache.get(pageNumber));
+      setLoading(false);
+      preloadAdjacent(pageNumber);
       return;
     }
+
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    getVersesByPage(page).then(data => {
-      if (!controller.signal.aborted) {
-        setVerses(data);
-        setReady(true);
-        preloadAdjacent(page);
-      }
-    }).catch(() => { });
+
+    setLoading(true);
+    getVersesByPage(pageNumber)
+      .then(data => {
+        if (!controller.signal.aborted) {
+          setVerses(data);
+          setLoading(false);
+          preloadAdjacent(pageNumber);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
     return () => controller.abort();
-  }, []);
-
-  useEffect(() => { storage.set('quran_last_page', pageNumber); }, [pageNumber]);
-  useEffect(() => { getChapters().then(setChapters).catch(() => {}); }, []);
-
-  useEffect(() => {
-    setReady(false);
-    const cleanup = loadPage(pageNumber);
-    return () => cleanup?.();
-  }, [pageNumber, loadPage]);
-
-  const lines = useMemo(() => verses.length ? mapLinesTo13(verses) : [], [verses]);
+  }, [pageNumber]);
 
   const goToPage = useCallback((page) => {
-    if (page < 1 || page > TOTAL_PAGES) return;
+    if (page < 1 || page > 604) return;
     setPageNumber(page);
     if (soundEnabled) PageTurnSound();
     setShowMenu(false);
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [soundEnabled]);
 
   const handleAddBookmark = () => {
@@ -312,8 +147,12 @@ export default function QuranWidget({ onClose }) {
     return chapters.find(ch => ch.pages[0] <= pageNumber && ch.pages[1] >= pageNumber);
   }, [chapters, pageNumber]);
 
+  const totalPages = 604;
+
   return (
     <div className="fixed inset-0 z-[100] bg-[#0a0a0f] text-white flex flex-col overflow-hidden select-none">
+
+      {/* Top UI Overlay */}
       <AnimatePresence>
         {showUi && (
           <motion.div
@@ -355,6 +194,7 @@ export default function QuranWidget({ onClose }) {
         )}
       </AnimatePresence>
 
+      {/* Center Page Info */}
       <AnimatePresence>
         {showUi && (
           <motion.div
@@ -374,6 +214,7 @@ export default function QuranWidget({ onClose }) {
         )}
       </AnimatePresence>
 
+      {/* Bottom UI */}
       <AnimatePresence>
         {showUi && (
           <motion.div
@@ -391,11 +232,11 @@ export default function QuranWidget({ onClose }) {
                 <ChevronLeft size={20} />
               </button>
               <span className="font-medium text-sm min-w-[100px] text-center">
-                Page {pageNumber} / {TOTAL_PAGES}
+                Page {pageNumber} / {totalPages}
               </span>
               <button
                 onClick={() => goToPage(pageNumber + 1)}
-                disabled={pageNumber >= TOTAL_PAGES}
+                disabled={pageNumber >= totalPages}
                 className="p-1.5 rounded-full hover:bg-white/20 disabled:opacity-30 transition-colors"
               >
                 <ChevronRight size={20} />
@@ -405,69 +246,73 @@ export default function QuranWidget({ onClose }) {
         )}
       </AnimatePresence>
 
-      <div
-        ref={scrollRef}
-        className="flex-1 w-full overflow-y-auto bg-gradient-to-b from-[#0a0a0f] via-[#111118] to-[#0d0d14] scroll-smooth"
-        onClick={() => setShowUi(prev => !prev)}
-      >
-        <div className="max-w-xl mx-auto px-3 sm:px-4 py-28 min-h-full flex flex-col justify-center">
-          {!ready ? (
-            <div className="w-full space-y-0">
-              {Array.from({ length: 13 }, (_, i) => (
-                <SkeletonLine key={i} />
-              ))}
+      {/* Main Content */}
+      <div className="flex-1 w-full overflow-y-auto bg-gradient-to-b from-[#0a0a0f] via-[#111118] to-[#0d0d14] scroll-smooth" onClick={() => setShowUi(prev => !prev)}>
+        <div className="max-w-2xl mx-auto px-4 py-24 min-h-full flex flex-col justify-center relative" ref={contentRef}>
+          {loading && <div className="absolute inset-0 bg-[#0a0a0f]/40 backdrop-blur-[1px] z-10 flex items-start justify-center pt-32">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-white/20 border-t-primary rounded-full animate-spin" />
+              <span className="text-xs text-white/40 font-medium">Loading...</span>
             </div>
-          ) : lines.length === 0 ? (
+          </div>}
+
+          {verses.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center gap-4 text-white/50 py-32">
               <BookOpen size={48} className="opacity-30" />
               <span className="text-sm font-medium">No verses found</span>
             </div>
-          ) : (
+          ) : verses.length > 0 ? (
             <motion.div
               key={pageNumber}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className="w-full"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-8"
             >
-              <div className="space-y-4">
-                <PageLines
-                  lines={lines}
-                  verses={verses}
-                  showTranslation={showTranslation}
-                  showTransliteration={showTransliteration}
-                />
-                {(showTranslation || showTransliteration) && (
-                  <div className="border-t border-white/5 pt-4 mt-4 space-y-4">
-                    {verses.map(verse => (
-                      <div key={verse.id} className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white/40 bg-white/5 rounded-full px-2 py-0.5">
-                            {verse.verse_key}
-                          </span>
-                        </div>
-                        {showTransliteration && (
-                          <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-sm text-white/30 italic leading-relaxed" dir="ltr">
-                            {verse.words.filter(w => w.char_type_name === 'word').map((word) => (
-                              <span key={word.id}>{word.transliteration?.text || ''}</span>
-                            ))}
-                          </div>
-                        )}
-                        {showTranslation && (
-                          <p className="text-sm md:text-base text-white/50 leading-relaxed" dir="ltr">
-                            {verse.words.filter(w => w.char_type_name === 'word').map(w => w.translation?.text).filter(Boolean).join(' ')}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+              {verses.map((verse) => (
+                <div key={verse.id} className="verse-block">
+                  <div className="text-right" dir="rtl">
+                    <div className="inline-flex flex-wrap gap-x-1 gap-y-0 justify-end items-baseline">
+                      {verse.words.filter(w => w.char_type_name === 'word').map((word) => (
+                        <span
+                          key={word.id}
+                          className="text-[28px] md:text-[32px] leading-[2.2] text-white/90 hover:text-white transition-colors"
+                          style={{ fontFamily: "'Scheherazade New', 'Traditional Arabic', 'Arabic Typesetting', serif" }}
+                        >
+                          {word.code_v1 || word.text}
+                        </span>
+                      ))}
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-xs font-bold text-white/60 ml-2 -mt-1" dir="ltr">
+                        {verse.verse_number}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {showTransliteration && (
+                    <div className="mt-2 text-left" dir="ltr">
+                      <div className="flex flex-wrap gap-x-2 gap-y-1 text-sm text-white/40 italic">
+                        {verse.words.filter(w => w.char_type_name === 'word').map((word) => (
+                          <span key={word.id}>{word.transliteration?.text || ''}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {showTranslation && (
+                    <div className="mt-2 text-left border-t border-white/5 pt-2">
+                      <p className="text-sm md:text-base text-white/60 leading-relaxed">
+                        {verse.words.filter(w => w.char_type_name === 'word').map(w => w.translation?.text).filter(Boolean).join(' ')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </motion.div>
-          )}
+          ) : null}
         </div>
       </div>
 
+      {/* Sidebar Menu */}
       <AnimatePresence>
         {showMenu && (
           <>
@@ -549,7 +394,7 @@ export default function QuranWidget({ onClose }) {
                   <div className="p-2 space-y-3 mt-2">
                     {TAJWEED_LEGEND.map(legend => (
                       <div key={legend.name} className="flex items-center gap-4 p-4 rounded-xl bg-secondary/40 border border-border/50">
-                        <div className="w-5 h-5 rounded-full shadow-inner ring-2 ring-background shrink-0" style={{ backgroundColor: legend.color }} />
+                        <div className="w-5 h-5 rounded-full shadow-inner ring-2 ring-background" style={{ backgroundColor: legend.color }} />
                         <div>
                           <div className="font-bold text-sm text-foreground">{legend.name}</div>
                           <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{legend.rule}</div>
@@ -613,16 +458,6 @@ export default function QuranWidget({ onClose }) {
           </>
         )}
       </AnimatePresence>
-
-      <style>{`
-        @keyframes tajweed-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.85; }
-        }
-        .verse-block {
-          transition: background-color 0.2s;
-        }
-      `}</style>
     </div>
   );
 }
