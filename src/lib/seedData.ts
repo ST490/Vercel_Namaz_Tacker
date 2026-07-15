@@ -1,7 +1,4 @@
-/**
- * Seeds the local database with sample data on first run.
- * Only runs once — tracked via localStorage flag.
- */
+import { storage } from './storage';
 
 const SEED_KEY = 'namaz_seeded_v1';
 const DB_KEY = 'namaz_db';
@@ -16,7 +13,7 @@ function makeLog(data) {
 }
 
 export function seedIfNeeded() {
-  if (localStorage.getItem(SEED_KEY)) return;
+  if (storage.get(SEED_KEY)) return;
 
   const prayerLogs = [
     { date: "2026-04-20", prayer_name: "fajr", completed: true, location: "mosque", timeliness: "on_time", composition: "fard_sunnah", quran_read: true, quran_pages: 3 },
@@ -43,6 +40,6 @@ export function seedIfNeeded() {
   ].map(makeLog);
 
   const db = { PrayerLog: prayerLogs, QazaTracker: qazaList };
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
-  localStorage.setItem(SEED_KEY, '1');
+  storage.set(DB_KEY, db);
+  storage.set(SEED_KEY, '1');
 }

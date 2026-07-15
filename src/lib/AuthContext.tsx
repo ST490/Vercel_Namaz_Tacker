@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { storage } from './storage';
 
 const AuthContext = createContext();
 
@@ -15,15 +16,11 @@ function simpleHash(str) {
 }
 
 function loadUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
-  } catch {
-    return {};
-  }
+  return storage.get(USERS_KEY) || {};
 }
 
 function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  storage.set(USERS_KEY, users);
 }
 
 export const AuthProvider = ({ children }) => {
@@ -34,14 +31,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Restore session on mount
-    try {
-      const session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-      if (session && session.username) {
-        setUser(session);
-        setIsAuthenticated(true);
-      }
-    } catch {
-      // ignore
+    const session = storage.get(SESSION_KEY);
+    if (session && session.username) {
+      setUser(session);
+      setIsAuthenticated(true);
     }
     setIsLoadingAuth(false);
   }, []);
@@ -74,7 +67,7 @@ export const AuthProvider = ({ children }) => {
     if (account.passwordHash !== simpleHash(password)) return { ok: false, error: 'Incorrect password.' };
 
     const session = { username: trimmed, isGuest: false };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    storage.set(SESSION_KEY, session);
     setUser(session);
     setIsAuthenticated(true);
     setAuthError(null);
@@ -86,14 +79,14 @@ export const AuthProvider = ({ children }) => {
    */
   const loginAsGuest = () => {
     const session = { username: 'guest', isGuest: true };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    storage.set(SESSION_KEY, session);
     setUser(session);
     setIsAuthenticated(true);
     setAuthError(null);
   };
 
   const logout = () => {
-    localStorage.removeItem(SESSION_KEY);
+    storage.remove(SESSION_KEY);
     setUser(null);
     setIsAuthenticated(false);
   };

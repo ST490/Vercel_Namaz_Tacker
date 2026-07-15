@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useCallback } from 'react';
+import { storage } from './storage';
 
 const LocationContext = createContext();
 
@@ -6,19 +7,11 @@ const LOCATION_KEY = 'namaz_location';
 const SCHOOL_KEY = 'namaz_school';
 
 function loadLocation() {
-  try {
-    return JSON.parse(localStorage.getItem(LOCATION_KEY) || 'null');
-  } catch {
-    return null;
-  }
+  return storage.get(LOCATION_KEY);
 }
 
 function loadSchool() {
-  try {
-    return localStorage.getItem(SCHOOL_KEY) || '0';
-  } catch {
-    return '0';
-  }
+  return storage.get(SCHOOL_KEY) || '0';
 }
 
 export const LocationProvider = ({ children }) => {
@@ -28,12 +21,12 @@ export const LocationProvider = ({ children }) => {
   const [locationError, setLocationError] = useState(null);
 
   const saveLocation = (loc) => {
-    localStorage.setItem(LOCATION_KEY, JSON.stringify(loc));
+    storage.set(LOCATION_KEY, loc);
     setLocationState(loc);
   };
 
   const setSchool = useCallback((val) => {
-    localStorage.setItem(SCHOOL_KEY, val);
+    storage.set(SCHOOL_KEY, val);
     setSchoolState(val);
   }, []);
 
@@ -70,7 +63,7 @@ export const LocationProvider = ({ children }) => {
   }, [setCoords]);
 
   const reset = useCallback(() => {
-    localStorage.removeItem(LOCATION_KEY);
+    storage.remove(LOCATION_KEY);
     setLocationState(null);
     setLocationError(null);
   }, []);

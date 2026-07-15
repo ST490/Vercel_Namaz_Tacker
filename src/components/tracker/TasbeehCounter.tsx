@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
+import { storage } from '@/lib/storage';
 
 const MILESTONES = [33, 66, 99];
 const MILESTONE_LABELS = {
@@ -17,17 +18,15 @@ const MILESTONE_TRANSLITERATION = {
 const STORAGE_KEY = 'tasbeeh_count';
 
 function loadCount() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (saved && saved.date === new Date().toDateString()) {
-      return saved.count;
-    }
-  } catch {/* ignore */}
+  const saved = storage.get(STORAGE_KEY);
+  if (saved && saved.date === new Date().toDateString()) {
+    return saved.count;
+  }
   return 0;
 }
 
 function saveCount(count) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ count, date: new Date().toDateString() }));
+  storage.set(STORAGE_KEY, { count, date: new Date().toDateString() });
 }
 
 // SVG progress ring

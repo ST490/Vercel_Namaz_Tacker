@@ -1,29 +1,17 @@
-/**
- * Local data client — persists all data in localStorage.
- * Data is namespaced per user: `namaz_db_<username>`
- * so each account (or guest) has its own isolated storage.
- */
+import { storage } from '../lib/storage';
 
 function getDbKey() {
-  try {
-    const session = JSON.parse(localStorage.getItem('namaz_session') || 'null');
-    const username = session?.username || 'guest';
-    return `namaz_db_${username}`;
-  } catch {
-    return 'namaz_db_guest';
-  }
+  const session = storage.get('namaz_session');
+  const username = session?.username || 'guest';
+  return `namaz_db_${username}`;
 }
 
 function loadDB() {
-  try {
-    return JSON.parse(localStorage.getItem(getDbKey()) || '{}');
-  } catch {
-    return {};
-  }
+  return storage.get(getDbKey()) || {};
 }
 
 function saveDB(db) {
-  localStorage.setItem(getDbKey(), JSON.stringify(db));
+  storage.set(getDbKey(), db);
 }
 
 function getCollection(name) {
