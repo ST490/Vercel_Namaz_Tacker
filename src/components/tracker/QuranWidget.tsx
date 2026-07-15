@@ -149,7 +149,7 @@ export default function QuranWidget({ onClose }) {
   const totalPages = 604;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background text-foreground flex flex-col overflow-hidden select-none">
+    <div className="fixed inset-0 z-[100] bg-[#0a0a0f] text-white flex flex-col overflow-hidden select-none">
 
       {/* Top UI Overlay */}
       <AnimatePresence>
