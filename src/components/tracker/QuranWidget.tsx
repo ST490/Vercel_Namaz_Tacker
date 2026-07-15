@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, List, Bookmark, ChevronLeft, ChevronRight, BookOpen, Loader2, Languages, Trash2, Edit2, Plus, Volume2, VolumeX } from 'lucide-react';
+import { X, List, Bookmark, ChevronLeft, ChevronRight, BookOpen, Languages, Trash2, Edit2, Plus, Volume2, VolumeX } from 'lucide-react';
 import { SURAH_MAPPING, PARA_MAPPING, TAJWEED_LEGEND } from '@/lib/quranMapping';
 import { storage } from '@/lib/storage';
 
 const QURAN_API = 'https://api.quran.com/api/v4';
 
-async function fetchJSON(url) {
-  const res = await fetch(url);
+async function fetchJSON(url, signal) {
+  const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
@@ -21,9 +21,23 @@ async function getChapters() {
   return chaptersCache;
 }
 
-async function fetchVersesByPage(page) {
+const versesCache = new Map();
+const preloadQueue = new Set();
+
+async function getVersesByPage(page) {
+  if (versesCache.has(page)) return versesCache.get(page);
   const data = await fetchJSON(`${QURAN_API}/verses/by_page/${page}?words=true&translations=131&language=en&limit=100`);
+  versesCache.set(page, data.verses);
   return data.verses;
+}
+
+function preloadAdjacent(page) {
+  [page - 1, page + 1].forEach(p => {
+    if (p >= 1 && p <= 604 && !versesCache.has(p) && !preloadQueue.has(p)) {
+      preloadQueue.add(p);
+      getVersesByPage(p).catch(() => {}).finally(() => preloadQueue.delete(p));
+    }
+  });
 }
 
 const PageTurnSound = () => {
@@ -48,8 +62,8 @@ export default function QuranWidget({ onClose }) {
     return parseInt(storage.get('quran_last_page')) || 1;
   });
   const [chapters, setChapters] = useState([]);
-  const [verses, setVerses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [verses, setVerses] = useState(() => versesCache.get(parseInt(storage.get('quran_last_page')) || 1) || []);
+  const [loading, setLoading] = useState(!versesCache.has(parseInt(storage.get('quran_last_page')) || 1));
   const [showUi, setShowUi] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [menuTab, setMenuTab] = useState('surah');
@@ -59,7 +73,7 @@ export default function QuranWidget({ onClose }) {
   const [bookmarks, setBookmarks] = useState(() => {
     return storage.get('quran_bookmarks') || [];
   });
-  const contentRef = useRef(null);
+  const abortRef = useRef(null);
 
   useEffect(() => {
     storage.set('quran_last_page', pageNumber);
@@ -70,20 +84,31 @@ export default function QuranWidget({ onClose }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    if (versesCache.has(pageNumber)) {
+      setVerses(versesCache.get(pageNumber));
+      setLoading(false);
+      preloadAdjacent(pageNumber);
+      return;
+    }
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
-    setVerses([]);
-    fetchVersesByPage(pageNumber)
+    getVersesByPage(pageNumber)
       .then(data => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setVerses(data);
           setLoading(false);
+          preloadAdjacent(pageNumber);
         }
       })
       .catch(() => {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
-    return () => { cancelled = true; };
+
+    return () => controller.abort();
   }, [pageNumber]);
 
   const goToPage = useCallback((page) => {
@@ -221,42 +246,47 @@ export default function QuranWidget({ onClose }) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className="flex-1 w-full overflow-y-auto bg-gradient-to-b from-[#0a0a0f] via-[#111118] to-[#0d0d14]" onClick={() => setShowUi(prev => !prev)}>
-        <div className="max-w-2xl mx-auto px-4 py-24 min-h-full flex flex-col justify-center" ref={contentRef}>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center gap-4 text-white/50 py-32">
-              <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <span className="text-sm font-medium">Loading verses...</span>
+      <div className="flex-1 w-full overflow-y-auto bg-gradient-to-b from-[#0a0a0f] via-[#111118] to-[#0d0d14] scroll-smooth" onClick={() => setShowUi(prev => !prev)}>
+        <div className="max-w-2xl mx-auto px-4 py-24 min-h-full flex flex-col justify-center relative" ref={contentRef}>
+          {loading && <div className="absolute inset-0 bg-[#0a0a0f]/40 backdrop-blur-[1px] z-10 flex items-start justify-center pt-32">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-white/20 border-t-primary rounded-full animate-spin" />
+              <span className="text-xs text-white/40 font-medium">Loading...</span>
             </div>
-          ) : verses.length === 0 ? (
+          </div>}
+
+          {verses.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center gap-4 text-white/50 py-32">
               <BookOpen size={48} className="opacity-30" />
               <span className="text-sm font-medium">No verses found</span>
             </div>
-          ) : (
-            <div className="space-y-8">
+          ) : verses.length > 0 ? (
+            <motion.div
+              key={pageNumber}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-8"
+            >
               {verses.map((verse) => (
                 <div key={verse.id} className="verse-block">
-                  {/* Arabic Text */}
                   <div className="text-right" dir="rtl">
                     <div className="inline-flex flex-wrap gap-x-1 gap-y-0 justify-end items-baseline">
                       {verse.words.filter(w => w.char_type_name === 'word').map((word) => (
                         <span
                           key={word.id}
-                          className="text-[28px] md:text-[32px] leading-[2.2] text-white/90 font-arabic hover:text-white transition-colors cursor-pointer"
-                          style={{ fontFamily: "'Traditional Arabic', 'Arabic Typesetting', 'Scheherazade New', serif" }}
+                          className="text-[28px] md:text-[32px] leading-[2.2] text-white/90 hover:text-white transition-colors"
+                          style={{ fontFamily: "'Scheherazade New', 'Traditional Arabic', 'Arabic Typesetting', serif" }}
                         >
                           {word.code_v1 || word.text}
                         </span>
                       ))}
-                      {/* Verse number marker */}
                       <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-xs font-bold text-white/60 ml-2 -mt-1" dir="ltr">
                         {verse.verse_number}
                       </span>
                     </div>
                   </div>
 
-                  {/* Transliteration */}
                   {showTransliteration && (
                     <div className="mt-2 text-left" dir="ltr">
                       <div className="flex flex-wrap gap-x-2 gap-y-1 text-sm text-white/40 italic">
@@ -267,7 +297,6 @@ export default function QuranWidget({ onClose }) {
                     </div>
                   )}
 
-                  {/* Translation */}
                   {showTranslation && (
                     <div className="mt-2 text-left border-t border-white/5 pt-2">
                       <p className="text-sm md:text-base text-white/60 leading-relaxed">
@@ -277,8 +306,8 @@ export default function QuranWidget({ onClose }) {
                   )}
                 </div>
               ))}
-            </div>
-          )}
+            </motion.div>
+          ) : null}
         </div>
       </div>
 
