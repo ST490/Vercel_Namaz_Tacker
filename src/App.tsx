@@ -12,7 +12,6 @@ import QazaTracker from '@/pages/QazaTracker';
 import Hub from '@/pages/Hub';
 import AppSettings from '@/pages/AppSettings';
 import LoginPage from '@/pages/LoginPage';
-import ErrorBoundary from '@/components/ErrorBoundary';
 
 function AppRoutes() {
   const { isAuthenticated, isLoadingAuth } = useAuth();
@@ -44,20 +43,18 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <ThemeProvider>
-          <LocationProvider>
-            <QueryClientProvider client={queryClientInstance}>
-              <Router>
-                <AppRoutes />
-              </Router>
-              <Toaster />
-            </QueryClientProvider>
-          </LocationProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <ThemeProvider>
+        <LocationProvider>
+          <QueryClientProvider client={queryClientInstance}>
+            <Router>
+              <AppRoutes />
+            </Router>
+            <Toaster />
+          </QueryClientProvider>
+        </LocationProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
