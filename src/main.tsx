@@ -10,7 +10,11 @@ async function startApp() {
   await initStorage();
   
   // Seed sample data if needed
-  seedIfNeeded();
+  try {
+    seedIfNeeded();
+  } catch (e) {
+    console.error('Seeding failed:', e);
+  }
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <App />

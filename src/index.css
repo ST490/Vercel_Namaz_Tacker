@@ -4,98 +4,94 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --font-heading: 'Philosopher', sans-serif;
-    --font-body: 'Outfit', sans-serif;
-    --font-cutoff: 'Exo 2', sans-serif;
+:root {
+  --font-heading: 'Philosopher', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-cutoff: 'Exo 2', sans-serif;
 
-    --background: 45 30% 96%;
-    --foreground: 150 20% 15%;
-    --card: 45 25% 98%;
-    --card-foreground: 150 20% 15%;
-    --popover: 45 25% 98%;
-    --popover-foreground: 150 20% 15%;
-    --primary: 153 50% 28%;
-    --primary-foreground: 45 30% 96%;
-    --secondary: 45 20% 90%;
-    --secondary-foreground: 150 20% 20%;
-    --muted: 45 15% 92%;
-    --muted-foreground: 150 10% 45%;
-    --accent: 153 40% 35%;
-    --accent-foreground: 45 30% 96%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 150 15% 85%;
-    --input: 150 15% 85%;
-    --ring: 153 50% 28%;
-    --chart-1: 153 50% 28%;
-    --chart-2: 153 40% 40%;
-    --chart-3: 153 30% 50%;
-    --chart-4: 45 60% 55%;
-    --chart-5: 45 50% 65%;
-    --radius: 0.75rem;
+  --background: 45 30% 96%;
+  --foreground: 150 20% 15%;
+  --card: 45 25% 98%;
+  --card-foreground: 150 20% 15%;
+  --popover: 45 25% 98%;
+  --popover-foreground: 150 20% 15%;
+  --primary: 153 50% 28%;
+  --primary-foreground: 45 30% 96%;
+  --secondary: 45 20% 90%;
+  --secondary-foreground: 150 20% 20%;
+  --muted: 45 15% 92%;
+  --muted-foreground: 150 10% 45%;
+  --accent: 153 40% 35%;
+  --accent-foreground: 45 30% 96%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 150 15% 85%;
+  --input: 150 15% 85%;
+  --ring: 153 50% 28%;
+  --chart-1: 153 50% 28%;
+  --chart-2: 153 40% 40%;
+  --chart-3: 153 30% 50%;
+  --chart-4: 45 60% 55%;
+  --chart-5: 45 50% 65%;
+  --radius: 0.75rem;
 
-    --sidebar-background: 45 25% 95%;
-    --sidebar-foreground: 150 20% 15%;
-    --sidebar-primary: 153 50% 28%;
-    --sidebar-primary-foreground: 45 30% 96%;
-    --sidebar-accent: 153 40% 90%;
-    --sidebar-accent-foreground: 150 20% 15%;
-    --sidebar-border: 150 15% 85%;
-    --sidebar-ring: 153 50% 28%;
+  --sidebar-background: 45 25% 95%;
+  --sidebar-foreground: 150 20% 15%;
+  --sidebar-primary: 153 50% 28%;
+  --sidebar-primary-foreground: 45 30% 96%;
+  --sidebar-accent: 153 40% 90%;
+  --sidebar-accent-foreground: 150 20% 15%;
+  --sidebar-border: 150 15% 85%;
+  --sidebar-ring: 153 50% 28%;
 
-    --gold: 43 80% 52%;
-    --gold-light: 43 70% 65%;
-    --emerald: 153 50% 28%;
-    --emerald-light: 153 40% 45%;
-  }
+  --gold: 43 80% 52%;
+  --gold-light: 43 70% 65%;
+  --emerald: 153 50% 28%;
+  --emerald-light: 153 40% 45%;
+}
 
-  .dark {
-    /* Royal Blue & Gold Theme */
-    --background: 220 90% 8%;            /* Very dark navy */
-    --foreground: 210 20% 98%;           /* Off-white */
-    --card: 220 85% 15%;                 /* Deep royal blue */
-    --card-foreground: 210 20% 98%;
-    --popover: 220 85% 15%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 43 74% 49%;               /* Metallic Gold #D4AF37 */
-    --primary-foreground: 220 90% 8%;
-    --secondary: 220 70% 24%;            /* Lighter royal blue */
-    --secondary-foreground: 210 20% 98%;
-    --muted: 220 60% 20%;
-    --muted-foreground: 220 20% 70%;
-    --accent: 43 74% 49%;
-    --accent-foreground: 220 90% 8%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 60% 25%;
-    --input: 220 60% 25%;
-    --ring: 43 74% 49%;
-    --chart-1: 43 74% 49%;
-    --chart-2: 43 60% 40%;
-    --chart-3: 43 50% 30%;
-    --chart-4: 220 70% 40%;
-    --chart-5: 220 60% 30%;
+.dark {
+  --background: 220 90% 8%;
+  --foreground: 210 20% 98%;
+  --card: 220 85% 15%;
+  --card-foreground: 210 20% 98%;
+  --popover: 220 85% 15%;
+  --popover-foreground: 210 20% 98%;
+  --primary: 43 74% 49%;
+  --primary-foreground: 220 90% 8%;
+  --secondary: 220 70% 24%;
+  --secondary-foreground: 210 20% 98%;
+  --muted: 220 60% 20%;
+  --muted-foreground: 220 20% 70%;
+  --accent: 43 74% 49%;
+  --accent-foreground: 220 90% 8%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 60% 25%;
+  --input: 220 60% 25%;
+  --ring: 43 74% 49%;
+  --chart-1: 43 74% 49%;
+  --chart-2: 43 60% 40%;
+  --chart-3: 43 50% 30%;
+  --chart-4: 220 70% 40%;
+  --chart-5: 220 60% 30%;
 
-    --sidebar-background: 220 90% 6%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 43 74% 49%;
-    --sidebar-primary-foreground: 220 90% 8%;
-    --sidebar-accent: 220 70% 20%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 220 60% 25%;
-    --sidebar-ring: 43 74% 49%;
+  --sidebar-background: 220 90% 6%;
+  --sidebar-foreground: 210 20% 98%;
+  --sidebar-primary: 43 74% 49%;
+  --sidebar-primary-foreground: 220 90% 8%;
+  --sidebar-accent: 220 70% 20%;
+  --sidebar-accent-foreground: 210 20% 98%;
+  --sidebar-border: 220 60% 25%;
+  --sidebar-ring: 43 74% 49%;
 
-    --gold: 43 74% 49%;
-    --gold-light: 43 80% 65%;
-    --emerald: 153 50% 28%;
-    --emerald-light: 153 40% 45%;
+  --gold: 43 74% 49%;
+  --gold-light: 43 80% 65%;
+  --emerald: 153 50% 28%;
+  --emerald-light: 153 40% 45%;
 
-    /* Gradient background for dark mode */
-    --bg-gradient-from: #000B21;         /* Almost black navy */
-    --bg-gradient-to: #00308F;           /* Vibrant Royal Blue */
-  }
+  --bg-gradient-from: #000B21;
+  --bg-gradient-to: #00308F;
 }
 
 @layer base {
